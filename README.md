@@ -2,9 +2,10 @@
 
 Skills, shared libraries, and example apps for building on the Digit Apps platform.
 
-Agents clone this into a **local workspace**, pack, and publish to Digit over MCP.
-After the first publish, later MCP sessions download the live source from
-`app.currentPublish.downloadUrl` rather than depending on a copy the user kept.
+Agents clone this into a **local workspace**, pack, and publish to Digit.
+After the first publish, **external MCP** sessions download the live source from
+`app.currentPublish.downloadUrl`. Digit’s **in-app agent** already has that tree
+installed under `apps/` and should not re-download.
 This upstream repo does not accept contributions — do not open PRs or push here.
 
 ## Quick start
@@ -39,7 +40,7 @@ That skill covers:
 - Digit API access via `useDigitApiQuery` / `/proxy/digit`
 - Env vars and secrets (backend Worker injection only)
 - Publishing with Digit MCP (`apps` / `app` → upload zip → `publishApp` → poll)
-- MCP iteration: GET `app.currentPublish.downloadUrl` before editing a published app
+- External MCP iteration: GET `app.currentPublish.downloadUrl` before editing a published app (in-app agent skips this)
 
 ## Packages
 
@@ -69,13 +70,15 @@ API, public API, secrets, D1 CRUD, and env config. `npm run new-app` copies it i
 ## Publish reminder
 
 1. Create the app in the Digit UI first (MCP cannot create apps yet)
-2. If the app is already published, MCP users GET `currentPublish.downloadUrl` from
-   `app` and unpack `project/` over `apps/<name>` before editing
+2. If the app is already published: **external MCP** GETs `currentPublish.downloadUrl`
+   from `app` and unpacks `project/` over `apps/<name>`; **in-app agent** edits the
+   already-installed tree and skips that download
 3. Write/update `SPEC.md`, then `npm run pack -w apps/<name>`
 4. `app.zip` contains `frontend/` (+ `backend/` if declared) for Digit deploy, plus
    required `project/` (source, SPEC, tooling, vendored libs — not deployed)
-5. Use the MCP publish flow documented in the skill; the next MCP session starts
-   from the download URL again
+5. Use the MCP publish flow documented in the skill. The next external MCP
+   session starts from the download URL; the next in-app agent session uses the
+   harness-installed tree
 6. Do not push or open PRs against this upstream repo
 
 ## Starter asset
@@ -93,9 +96,10 @@ unzip digit-apps-starter.zip
 
 The archive includes the create-digit-app skill, `examples/`, `packages/`, `scripts/`,
 the packable source tree at `apps/app/`, and root install metadata — not `node_modules`
-or build outputs. MCP users iterating on an already-published app GET
-`currentPublish.downloadUrl` from MCP `app` and replace `apps/app/` with that
-archive's `project/` tree while keeping the starter shell.
+or build outputs. External MCP iterating on an already-published app GETs
+`currentPublish.downloadUrl` from MCP `app` and replaces `apps/app/` with that
+archive's `project/` tree while keeping the starter shell. Digit’s in-app agent
+skips that fetch — the live tree is already installed.
 
 ## License
 

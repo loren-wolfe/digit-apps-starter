@@ -5,8 +5,9 @@ what lets `digit-app pack` find its build toolchain.
 
 The curated starter archive includes `apps/app/`, a packable source scaffold generated
 from the frontend-only `examples/hello-world`. Use that scaffold only when the app has
-never been published. MCP users restoring a live app GET `currentPublish.downloadUrl`
-from MCP `app` and replace `apps/app/` with that archive's `project/` tree.
+never been published. External MCP restoring a live app GETs `currentPublish.downloadUrl`
+from MCP `app` and replaces `apps/app/` with that archive's `project/` tree. Digit’s
+in-app agent already has that tree installed here — do not re-download.
 
 ```
 npm run pack -w apps/app      # pack the starter archive's default app

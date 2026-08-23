@@ -7,7 +7,8 @@ description: >-
   locked-down sandboxed iframe (no downloads, popups, browser dialogs, clipboard,
   or device APIs). Use when creating a Digit app, editing an app in a local clone
   of this starter, publishing via MCP, iterating on a published app via MCP
-  (`app.currentPublish.downloadUrl`), or when the user mentions Digit apps,
+  (`app.currentPublish.downloadUrl` — skip this restore when Digit’s in-app
+  agent already installed the live source), or when the user mentions Digit apps,
   manifest.json, DigitProxyClient, DigitThemeProvider, /proxy/digit, or
   /proxy/backend.
 ---
@@ -25,21 +26,24 @@ Do not build vanilla HTML/CSS UI, invent a parallel design system, or skip the t
 package. Users are often non-developers — one path keeps apps looking and behaving
 like Digit.
 
-**Digit MCP is required.** Use it for schema lookup, permissions, listing apps,
-downloading the live publish, and publish. If MCP is not connected, stop and ask
-the user to connect Digit MCP before continuing.
+**Digit MCP is required** for schema lookup, permissions, listing apps, and
+publish. If MCP is not connected, stop and ask the user to connect Digit MCP
+before continuing.
 
-**MCP iteration loop (required):** After an app has been published, Digit is the
-source of truth. On every MCP session that changes a published app, call **`app`**,
-GET `currentPublish.downloadUrl`, unpack `project/` over `apps/<name>`, then edit
-and publish again. Do **not** ask the user for a local copy they saved earlier, and
-do **not** start from `examples/` while a download URL exists. (This download step
-is for MCP clients — Cursor and similar — which do not restore the bundle for you.)
+**Where the live source comes from** — pick one; do not mix them:
+
+| Host | Live source | Restore step |
+| --- | --- | --- |
+| **Digit in-app agent** | Already unpacked under `apps/<name>` when the session starts | **Skip** `currentPublish.downloadUrl`. Edit the tree on disk. Re-downloading overwrites what the harness installed. |
+| **External MCP** (Cursor and other MCP hosts) | Digit’s published bundle | **Required:** call **`app`**, GET `currentPublish.downloadUrl`, unpack `project/` over `apps/<name>` before any edit. Do not ask the user for a copy they saved, and do not start from `examples/` while a URL exists. |
+
+After a successful publish, the next **external MCP** session starts with download
+again. The next **in-app agent** session starts from the harness-installed tree.
 
 ## When to use
 
 - Creating a new Digit app from scratch
-- Changing a published app over MCP (download live source first, then republish)
+- Changing a published app (in-app agent: edit the installed tree; external MCP: download first, then republish)
 - Adapting one of the `examples/` templates
 - Declaring `manifest.json` permissions / backend
 - Calling the Digit GraphQL API from an app
@@ -53,7 +57,7 @@ is for MCP clients — Cursor and similar — which do not restore the bundle fo
 | Public GraphQL schema | MCP resources `graphql-schema://index`, `graphql-schema://type/{TypeName}`, `graphql-schema://search/{query}` |
 | Manifest permissions | MCP tool **`appPermissions`** — put each permission’s **`key`** in `manifest.json` |
 | Find an existing app’s id | MCP tool **`apps`** |
-| Restore live source (MCP) | MCP tool **`app`** — GET `currentPublish.downloadUrl` before any edit to a published app |
+| Restore live source (external MCP only) | MCP tool **`app`** — GET `currentPublish.downloadUrl` before edits. **In-app agent: skip** — source is already on disk. |
 | Publish | **`generateAppUploadLink`** → HTTP POST zip → **`publishApp`** → poll **`appPublish`** |
 
 There are **no** MCP tools to create, update, or delete apps, or to manage env/secrets —
@@ -71,7 +75,7 @@ Copy this checklist and track progress:
 ```
 Digit app progress:
 - [ ] 1. Confirm the app exists in Digit (get appId via apps)
-- [ ] 2. MCP restore: call app. If currentPublish.downloadUrl is set, GET it and unpack project/ over apps/<name> before any edits
+- [ ] 2. External MCP only: call app, GET currentPublish.downloadUrl, unpack project/ over apps/<name>. In-app agent: skip — use the installed apps/<name> tree
 - [ ] 3. If no publish yet: use starter apps/app, or new-app for an additional workspace
 - [ ] 4. Implement frontend (React + MUI + DigitThemeProvider → #root)
 - [ ] 5. Add src/backend/ only if env/secrets or server logic needed
@@ -81,7 +85,7 @@ Digit app progress:
 - [ ] 9. Write/update SPEC.md
 - [ ] 10. npm run pack -w apps/<name> → app.zip
 - [ ] 11. Publish via MCP (upload zip out-of-band)
-- [ ] 12. Next MCP session starts at step 2 (download live source) — do not reuse a stale local tree
+- [ ] 12. Next external-MCP session starts at step 2. Next in-app-agent session: skip step 2 (harness already installed the latest publish)
 ```
 
 Schema and permission lookup (steps 6–8) must happen **before publish**. Do them as soon
@@ -94,11 +98,10 @@ API call.
 Publishing **never creates** an app. Ask the user to create the app in the Digit UI first,
 then resolve its `id` with MCP **`apps`** (or have the user paste it).
 
-### 2. MCP: restore the live publish before editing
+### 2. Restore the live publish (external MCP only)
 
-**For MCP clients only** (Cursor and other MCP hosts): Digit keeps the published
-bundle. You must pull it at the start of a change session. Users no longer need to
-stash source themselves.
+**External MCP hosts (Cursor and similar):** Digit keeps the published bundle and
+does not install it into your workspace. At the start of every change session:
 
 1. Call MCP **`app`** with the id from step 1.
 2. If `currentPublish.downloadUrl` is set, HTTP **GET** it (out-of-band; not via
@@ -106,14 +109,18 @@ stash source themselves.
 3. Replace `apps/<name>` entirely with the zip’s **`project/`** tree (source,
    `manifest.json`, `SPEC.md`, vendored `@digit/lib-*`). Do not copy zip-root
    `frontend/` / `backend/` into the workspace — those are pack outputs.
-4. Only then edit, pack, and publish. The next MCP session repeats this download
-   so it starts from whatever is live, not a leftover local tree.
+4. Only then edit, pack, and publish. The next external MCP session repeats this
+   download so it starts from whatever is live.
 
 If `currentPublish` is missing, there is no successful publish yet — scaffold as in
 step 3. Never rebuild from `examples/` while a download URL exists.
 
-The download is the same shape as a packed `app.zip`. Do not invent another fetch
-path. Details: [reference/publish.md](reference/publish.md).
+**Digit in-app agent:** skip this entire step. The harness already installed the
+current publish (or the starter scaffold) under `apps/<name>`. Edit that tree;
+do **not** GET `currentPublish.downloadUrl` or replace `apps/`.
+
+The download zip is the same shape as a packed `app.zip`. Do not invent another
+fetch path. Details: [reference/publish.md](reference/publish.md).
 
 ### 3. Scaffold only when there is no publish yet
 
@@ -122,9 +129,10 @@ required, because apps depend on the libraries via `file:../../packages/*`.
 
 The curated starter archive already contains `apps/app`, pre-scaffolded from the
 frontend-only `examples/hello-world` without build outputs. Use that (or `new-app`)
-**only** when step 2 found no `currentPublish.downloadUrl`. Add `src/backend/` only
-when the app needs server-side functionality. Run `new-app` only when adding another
-app workspace:
+**only** when you are on external MCP and step 2 found no `currentPublish.downloadUrl`,
+or when the in-app agent provisioned a first-time (never published) workspace. Add
+`src/backend/` only when the app needs server-side functionality. Run `new-app` only
+when adding another app workspace:
 
 ```bash
 npm install                     # once per clone, from the repo root
@@ -253,22 +261,30 @@ read env-backed data via backend hooks.
 
 ### 9. Publish via MCP
 
+External MCP:
+
 ```
-apps → app (GET currentPublish.downloadUrl if set) → edit → pack
+apps → app (GET currentPublish.downloadUrl) → edit → pack
   → generateAppUploadLink → POST zip to uploadUrl → publishApp → poll appPublish
 ```
 
-On a later MCP session, start at **`app`** again — download, then iterate, then
-publish. The zip does **not** travel through MCP. If you cannot HTTP GET the
-download URL or POST the zip, stop and tell the user. Run `npm run pack`, then
-upload **`app.zip` unchanged**.
+In-app agent (source already on disk):
+
+```
+edit the installed apps/<name> tree → pack
+  → generateAppUploadLink → POST zip to uploadUrl → publishApp → poll appPublish
+```
+
+The zip does **not** travel through MCP. If you cannot POST the zip (or, on
+external MCP, cannot GET the download URL), stop and tell the user. Run
+`npm run pack`, then upload **`app.zip` unchanged**.
 Full steps: [reference/publish.md](reference/publish.md).
 
 ### 10. SPEC.md
 
-Update `SPEC.md` before pack — it ships in `project/` so the next MCP session that
-downloads `currentPublish.downloadUrl` has purpose, why each permission/env exists,
-verbatim prompts, and context. Model:
+Update `SPEC.md` before pack — it ships in `project/` so the next session
+(external MCP download, or in-app harness install) has purpose, why each
+permission/env exists, verbatim prompts, and context. Model:
 [`examples/full-featured/SPEC.md`](../../../examples/full-featured/SPEC.md).
 Details: [reference/spec.md](reference/spec.md).
 

@@ -53,11 +53,13 @@ realistic builder-perspective SPEC.
 
 | Where | How the app is preserved |
 | --- | --- |
-| MCP session | Digit is the source of truth. Before edits, GET MCP **`app`** → `currentPublish.downloadUrl` and unpack `project/` over `apps/<name>`. Do not ask the user for a copy they saved locally. |
+| External MCP session | Digit is the source of truth. Before edits, GET MCP **`app`** → `currentPublish.downloadUrl` and unpack `project/` over `apps/<name>`. |
+| Digit in-app agent | The harness already installed the live `project/` (or first-time scaffold) under `apps/<name>`. Do not re-download. |
 | Published Digit app | `npm run pack` → `app.zip` (includes required `project/` source tree, including this SPEC). |
 
-Work under `apps/<name>` after restore. Local git commits are optional. Do not push or
-open PRs against this upstream starter.
+Work under `apps/<name>` after restore (external MCP) or on the installed tree
+(in-app agent). Local git commits are optional. Do not push or open PRs against
+this upstream starter.
 
 ### Keep in the workspace
 
