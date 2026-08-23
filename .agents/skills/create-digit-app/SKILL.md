@@ -7,8 +7,8 @@ description: >-
   locked-down sandboxed iframe (no downloads, popups, browser dialogs, clipboard,
   or device APIs). Use when creating a Digit app, editing an app in a local clone
   of this starter, publishing via MCP, iterating on a published app via MCP
-  (`app.currentPublish.downloadUrl` — skip this restore when Digit’s in-app
-  agent already installed the live source), or when the user mentions Digit apps,
+  (`app.currentPublish.downloadUrl` unless `.digit/in-app-agent` or
+  `DIGIT_IN_APP_AGENT` marks Digit’s in-app agent), or when the user mentions Digit apps,
   manifest.json, DigitProxyClient, DigitThemeProvider, /proxy/digit, or
   /proxy/backend.
 ---
@@ -30,15 +30,28 @@ like Digit.
 publish. If MCP is not connected, stop and ask the user to connect Digit MCP
 before continuing.
 
-**Where the live source comes from** — pick one; do not mix them:
+**Where the live source comes from**
 
-| Host | Live source | Restore step |
+Both hosts expose Digit MCP (`apps`, `app`, `publishApp`, …). That does **not**
+tell you which host you are — do not guess from tool names, `apps/` existing, or
+the IDE.
+
+**Detect in-app agent with a marker (any one is enough):**
+
+- Workspace file **`.digit/in-app-agent`** at the repo root (Digit’s harness
+  writes this when it installs the live tree; the starter zip must not contain it)
+- Environment variable **`DIGIT_IN_APP_AGENT`** set to a non-empty value
+- Your system/developer instructions explicitly say you are Digit’s **in-app
+  agent**
+
+| Detected host | Live source | Restore |
 | --- | --- | --- |
-| **Digit in-app agent** | Already unpacked under `apps/<name>` when the session starts | **Skip** `currentPublish.downloadUrl`. Edit the tree on disk. Re-downloading overwrites what the harness installed. |
-| **External MCP** (Cursor and other MCP hosts) | Digit’s published bundle | **Required:** call **`app`**, GET `currentPublish.downloadUrl`, unpack `project/` over `apps/<name>` before any edit. Do not ask the user for a copy they saved, and do not start from `examples/` while a URL exists. |
+| Marker / env / instructions present → **in-app agent** | Already under `apps/<name>` | **Skip** `currentPublish.downloadUrl`. Do not replace `apps/`. |
+| None of the above → **external MCP** | Digit’s published bundle | **Required:** call **`app`**, GET `currentPublish.downloadUrl` if set, unpack `project/` over `apps/<name>` before any edit. |
 
-After a successful publish, the next **external MCP** session starts with download
-again. The next **in-app agent** session starts from the harness-installed tree.
+If you cannot find a marker, treat the session as external MCP. After publish, the
+next external MCP session downloads again; the next in-app session uses the
+harness-installed tree.
 
 ## When to use
 
@@ -75,7 +88,7 @@ Copy this checklist and track progress:
 ```
 Digit app progress:
 - [ ] 1. Confirm the app exists in Digit (get appId via apps)
-- [ ] 2. External MCP only: call app, GET currentPublish.downloadUrl, unpack project/ over apps/<name>. In-app agent: skip — use the installed apps/<name> tree
+- [ ] 2. If .digit/in-app-agent, DIGIT_IN_APP_AGENT, or in-app-agent instructions: skip restore. Else (external MCP): call app, GET currentPublish.downloadUrl, unpack project/ over apps/<name>
 - [ ] 3. If no publish yet: use starter apps/app, or new-app for an additional workspace
 - [ ] 4. Implement frontend (React + MUI + DigitThemeProvider → #root)
 - [ ] 5. Add src/backend/ only if env/secrets or server logic needed
@@ -85,7 +98,7 @@ Digit app progress:
 - [ ] 9. Write/update SPEC.md
 - [ ] 10. npm run pack -w apps/<name> → app.zip
 - [ ] 11. Publish via MCP (upload zip out-of-band)
-- [ ] 12. Next external-MCP session starts at step 2. Next in-app-agent session: skip step 2 (harness already installed the latest publish)
+- [ ] 12. Next session: in-app (marker present) skips step 2; external MCP repeats step 2
 ```
 
 Schema and permission lookup (steps 6–8) must happen **before publish**. Do them as soon
@@ -100,8 +113,10 @@ then resolve its `id` with MCP **`apps`** (or have the user paste it).
 
 ### 2. Restore the live publish (external MCP only)
 
-**External MCP hosts (Cursor and similar):** Digit keeps the published bundle and
-does not install it into your workspace. At the start of every change session:
+**Decide with the marker check above — not with “I have MCP tools.”**
+
+**No in-app marker** (external MCP): Digit keeps the published bundle and does not
+install it into your workspace. At the start of every change session:
 
 1. Call MCP **`app`** with the id from step 1.
 2. If `currentPublish.downloadUrl` is set, HTTP **GET** it (out-of-band; not via
@@ -109,15 +124,14 @@ does not install it into your workspace. At the start of every change session:
 3. Replace `apps/<name>` entirely with the zip’s **`project/`** tree (source,
    `manifest.json`, `SPEC.md`, vendored `@digit/lib-*`). Do not copy zip-root
    `frontend/` / `backend/` into the workspace — those are pack outputs.
-4. Only then edit, pack, and publish. The next external MCP session repeats this
-   download so it starts from whatever is live.
+4. Only then edit, pack, and publish. The next unmarked session repeats this
+   download.
 
 If `currentPublish` is missing, there is no successful publish yet — scaffold as in
 step 3. Never rebuild from `examples/` while a download URL exists.
 
-**Digit in-app agent:** skip this entire step. The harness already installed the
-current publish (or the starter scaffold) under `apps/<name>`. Edit that tree;
-do **not** GET `currentPublish.downloadUrl` or replace `apps/`.
+**In-app marker present:** skip this entire step. Edit `apps/<name>` as installed.
+Do **not** GET `currentPublish.downloadUrl` or replace `apps/`.
 
 The download zip is the same shape as a packed `app.zip`. Do not invent another
 fetch path. Details: [reference/publish.md](reference/publish.md).

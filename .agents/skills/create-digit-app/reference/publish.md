@@ -8,9 +8,9 @@ required for this workflow.
 1. User has **created the app in Digit** (UI). Publishing never creates apps — there are
    no MCP tools to create, update, or delete apps.
 2. You know the app `id` — resolve with MCP `apps`, or ask the user.
-3. **External MCP only:** if the app is already published, restore source from
-   `currentPublish.downloadUrl` **before** editing (see below). Digit’s in-app
-   agent skips this — it already has the live tree under `apps/<name>`.
+3. **Restore source:** if `.digit/in-app-agent` / `DIGIT_IN_APP_AGENT` / in-app
+   instructions are present, skip download. Otherwise GET
+   `currentPublish.downloadUrl` **before** editing (see below).
 4. GraphQL operations checked against `graphql-schema://…` and `manifest.permissions`
    filled with **`key`** values from MCP **`appPermissions`**.
 5. `app.zip` ready via `npm run pack` (`digit-app pack` from `@digit/lib-build`). Local
@@ -26,7 +26,7 @@ download and edits the installed `apps/<name>` tree.
 
 ```
 1. apps                     → find appId
-2. app                      → GET currentPublish.downloadUrl (external MCP only; in-app agent skips)
+2. app                      → GET currentPublish.downloadUrl (skip if in-app marker)
 3. generateAppUploadLink    → id, uploadUrl, uploadFields
 4. HTTP POST zip to uploadUrl (multipart; NOT via MCP)
 5. publishApp               → appId + appUploadLinkId
@@ -41,9 +41,14 @@ If the app does not exist, stop and ask the user to create it in Digit.
 
 ### 2. Restore the active published source (external MCP only)
 
-**External MCP (Cursor and other MCP hosts):** Digit stores the live bundle; your
-workspace does not have it until you fetch it. Call MCP `app` with the `id` from
-step 1 at the start of every change session:
+**Both hosts have Digit MCP.** Detect in-app agent if **any** of these is true:
+workspace file `.digit/in-app-agent`, env `DIGIT_IN_APP_AGENT` non-empty, or
+instructions that you are Digit’s in-app agent. If none match, you are external
+MCP — do not guess.
+
+**External MCP:** Digit stores the live bundle; your workspace does not have it
+until you fetch it. Call MCP `app` with the `id` from step 1 at the start of
+every change session:
 
 - `currentPublish.downloadUrl` — HTTP GET this URL (out-of-band; not via MCP) to
   download the **currently live** bundle, the same zip shape produced by
@@ -54,9 +59,8 @@ step 1 at the start of every change session:
 Do not rebuild from an example, and do not ask the user to paste or attach source
 they saved earlier, while a download URL is available.
 
-**Digit in-app agent:** skip this step. The harness already installed the current
-publish (or the first-time scaffold) under `apps/<name>`. Edit that tree. Do not
-GET `downloadUrl` or replace `apps/` — that overwrites the installed source.
+**In-app agent (marker present):** skip this step. Edit `apps/<name>` as
+installed. Do not GET `downloadUrl` or replace `apps/`.
 
 ### 3. Generate upload link
 
