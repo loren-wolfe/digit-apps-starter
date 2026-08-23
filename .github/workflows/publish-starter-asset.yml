@@ -65,9 +65,7 @@ jobs:
             packages/ \
             "$STAGE/packages/"
 
-          rsync -a \
-            --exclude install-mcp-skills.sh \
-            scripts/ "$STAGE/scripts/"
+          rsync -a scripts/ "$STAGE/scripts/"
 
           cp apps/README.md "$STAGE/apps/README.md"
           cp package.json package-lock.json README.md LICENSE .gitignore "$STAGE/"
@@ -112,37 +110,12 @@ jobs:
             exit 1
           fi
 
-          MCP_SKILLS_STAGE="$(mktemp -d)"
-          rsync -a .agents/skills/create-digit-app "$MCP_SKILLS_STAGE/"
-          rsync -a .agents/skills/update-digit-app "$MCP_SKILLS_STAGE/"
-          (
-            cd "$MCP_SKILLS_STAGE"
-            zip -rq "$GITHUB_WORKSPACE/digit-app-mcp-skills.zip" create-digit-app update-digit-app
-          )
-          echo "MCP skills archive:"
-          ls -lh digit-app-mcp-skills.zip
-          unzip -Z1 digit-app-mcp-skills.zip | awk -F/ 'NF<=2 {print}' | sort -u
-          unzip -Z1 digit-app-mcp-skills.zip | grep -q '^update-digit-app/SKILL.md$'
-
-          if unzip -Z1 digit-apps-starter.zip | grep -q 'install-mcp-skills.sh'; then
-            echo "starter zip must not include install-mcp-skills.sh" >&2
-            exit 1
-          fi
-
       - name: Upload dry-run artifact
         if: env.DRY_RUN == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digit-apps-starter
           path: digit-apps-starter.zip
-          if-no-files-found: error
-
-      - name: Upload dry-run MCP skills artifact
-        if: env.DRY_RUN == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: digit-app-mcp-skills
-          path: digit-app-mcp-skills.zip
           if-no-files-found: error
 
       - name: Create dated release
@@ -152,7 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ steps.build.outputs.tag }}"
-          gh release create "$TAG" digit-apps-starter.zip digit-app-mcp-skills.zip \
+          gh release create "$TAG" digit-apps-starter.zip \
             --title "$TAG" \
             --notes "Curated digit-apps-starter snapshot from \`${GITHUB_SHA}\` on \`main\`." \
             --latest=false
@@ -173,12 +146,13 @@ jobs:
           ### Contents (\`digit-apps-starter.zip\`)
           - \`.agents/skills/create-digit-app\` only (not update-digit-app)
           - Pre-scaffolded, frontend-only, packable \`apps/app/\`
-          - \`examples/\`, \`packages/\`, \`scripts/\` (no \`install-mcp-skills.sh\`)
+          - \`examples/\`, \`packages/\`, \`scripts/\`
           - Root \`package.json\`, \`package-lock.json\`, \`README.md\`, \`LICENSE\`, \`.gitignore\`
 
-          ### MCP skills (\`digit-app-mcp-skills.zip\`)
-          create-digit-app + update-digit-app for Cursor / other MCP hosts.
-          Refresh from GitHub main with \`scripts/install-mcp-skills.sh\`.
+          ### Claude + Digit MCP
+          Add \`${{ github.repository }}\` as a plugin marketplace in Claude,
+          then install **Digit Apps**. The plugin includes create-digit-app and
+          update-digit-app and receives marketplace updates.
 
           ### Download
           \`\`\`bash
@@ -191,7 +165,7 @@ jobs:
 
           gh release delete starter-latest --cleanup-tag --yes 2>/dev/null || true
 
-          gh release create starter-latest digit-apps-starter.zip digit-app-mcp-skills.zip \
+          gh release create starter-latest digit-apps-starter.zip \
             --title "starter-latest" \
             --notes "$NOTES" \
             --latest

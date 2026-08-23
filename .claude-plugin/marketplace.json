@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "digit-apps",
+  "owner": {
+    "name": "Digit"
+  },
+  "metadata": {
+    "description": "Official skills for building Digit custom apps."
+  },
+  "plugins": [
+    {
+      "name": "digit-apps",
+      "source": "./",
+      "description": "Create new Digit apps and update published apps through Digit MCP.",
+      "category": "development",
+      "tags": [
+        "digit",
+        "custom-apps",
+        "mcp"
+      ]
+    }
+  ]
+}

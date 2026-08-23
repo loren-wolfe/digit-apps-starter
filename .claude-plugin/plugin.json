@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "digit-apps",
+  "displayName": "Digit Apps",
+  "version": "0.1.0",
+  "description": "Create and update Digit custom apps through Digit MCP.",
+  "author": {
+    "name": "Digit"
+  },
+  "homepage": "https://github.com/Digit-Technologies/digit-apps-starter",
+  "repository": "https://github.com/Digit-Technologies/digit-apps-starter",
+  "license": "MIT",
+  "keywords": [
+    "digit",
+    "custom-apps",
+    "mcp"
+  ],
+  "skills": [
+    "./.agents/skills/create-digit-app",
+    "./.agents/skills/update-digit-app"
+  ]
+}

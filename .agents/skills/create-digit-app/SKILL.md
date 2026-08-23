@@ -294,5 +294,6 @@ Proxy details: [reference/proxy-and-api.md](reference/proxy-and-api.md).
 - [reference/jobs-and-schedules.md](reference/jobs-and-schedules.md) — jobs, schedules, DIGIT_JOBS
 - [reference/webhooks.md](reference/webhooks.md) — inbound webhooks, signature verification
 - [reference/d1-migrations.md](reference/d1-migrations.md) — database SQL applied on publish
+- [reference/publish.md](reference/publish.md) — MCP publish workflow and zip rules
 - [reference/spec.md](reference/spec.md) — SPEC.md iteration context
 - [`packages/lib-build`](../../../packages/lib-build) — `digit-app pack` shared tooling

@@ -29,9 +29,9 @@ include a backend or compiled build directories. In that downloaded archive, wor
 | [create-digit-app](.agents/skills/create-digit-app/SKILL.md) | In-app agent **and** MCP | New apps, or edits when source is already on disk |
 | [update-digit-app](.agents/skills/update-digit-app/SKILL.md) | **MCP only** | Change a **published** app from a **fresh** workspace (download live source first) |
 
-The curated **starter zip** (in-app harness) ships **create-digit-app only**. MCP
-hosts should install **both** skills into Cursor and refresh them from GitHub
-`main` (see [MCP skills](#mcp-skills-install-and-updates)).
+The curated **starter zip** (in-app harness) ships **create-digit-app only**.
+Claude users working through Digit MCP install the **Digit Apps** plugin, which
+bundles both skills.
 
 The create skill covers:
 
@@ -43,40 +43,29 @@ The create skill covers:
 - Env vars and secrets (backend Worker injection only)
 - Publishing with Digit MCP (`apps` → upload zip → `publishApp` → poll)
 
-## MCP skills (install and updates)
+## Claude plugin (Digit MCP users)
 
-Cursor matches skills from YAML `description` fields. Put both skill folders in
-**user skills** (`~/.cursor/skills`) so they apply in every Digit MCP workspace,
-including a starter-zip checkout that has no `update-digit-app`.
+The native, non-technical install path is the **Digit Apps** Claude plugin:
 
-**Always current** (GitHub `main`, no manual zip hunt):
+1. In Claude, open **Customize → Plugins**.
+2. Click **+ → Add marketplace → Add from a repository**.
+3. Enter `Digit-Technologies/digit-apps-starter`.
+4. Install **Digit Apps**.
 
-```bash
-curl -fsSL -o /tmp/install-mcp-skills.sh \
-  https://raw.githubusercontent.com/Digit-Technologies/digit-apps-starter/main/scripts/install-mcp-skills.sh
-bash /tmp/install-mcp-skills.sh --user
-```
+The plugin bundles create-digit-app and update-digit-app. Users add the
+marketplace once; Claude checks that marketplace for plugin updates, and users
+can also select **Update** on the marketplace. No skill ZIP or shell script is
+required.
 
-That overwrites `~/.cursor/skills/create-digit-app` and
-`~/.cursor/skills/update-digit-app`. From a git clone of this repo you can run
-`./scripts/install-mcp-skills.sh --user` instead.
+For Team / Enterprise, an owner can connect this as an organization marketplace
+and distribute the plugin as **Installed by default** or **Required**. Anthropic
+requires organization-synced GitHub marketplaces to be private/internal. Enable
+**Sync automatically** so merged plugin version bumps propagate to users.
 
-Cursor does not auto-update project skills. To avoid pulling by hand, add a
-**user rule**: *When working on Digit custom apps over MCP, run
-`install-mcp-skills.sh --user` at the start of the session.* The agent refreshes
-the files, then follows `update-digit-app` / `create-digit-app`.
-
-Optional pinned snapshot on the same GitHub release as the starter zip:
-
-```bash
-curl -fsSL -o digit-app-mcp-skills.zip \
-  https://github.com/Digit-Technologies/digit-apps-starter/releases/latest/download/digit-app-mcp-skills.zip
-unzip -o digit-app-mcp-skills.zip -d ~/.cursor/skills
-```
-
-Longer term, Digit MCP could expose these markdown files as resources so clients
-never copy them to disk. Until then, user skills + the install script (or the
-user rule) is the refresh path.
+The plugin version lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json)
+and must be bumped whenever either skill changes. For the lowest-friction public
+experience, submit this plugin to Anthropic's community/partner directory so
+users can find it under **Browse plugins** without adding a repository.
 
 ## Packages
 
@@ -129,10 +118,9 @@ unzip digit-apps-starter.zip
 ```
 
 The archive includes **create-digit-app only** (not update-digit-app), `examples/`,
-`packages/`, `scripts/` (except `install-mcp-skills.sh`), the packable source tree
-at `apps/app/`, and root install metadata — not `node_modules` or build outputs.
-MCP hosts install create + update into Cursor via
-[MCP skills](#mcp-skills-install-and-updates).
+`packages/`, `scripts/`, the packable source tree at `apps/app/`, and root
+install metadata — not `node_modules` or build outputs. Claude + Digit MCP users
+get both skills through the [Digit Apps plugin](#claude-plugin-digit-mcp-users).
 
 ## License
 

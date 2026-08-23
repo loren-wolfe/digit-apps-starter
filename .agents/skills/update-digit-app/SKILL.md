@@ -87,29 +87,11 @@ through pack and publish. Update `SPEC.md` with the new prompts before pack.
 The next **MCP** session that changes this app starts this skill again
 (download first). Do not reuse a leftover local tree from an earlier session.
 
-## Install / keep current (MCP hosts)
+## Distribution
 
-The in-app starter zip does **not** include this skill. Install both skills into
-Cursor (user or project) and refresh from GitHub **main** so you are not on a
-stale copy:
+This skill is bundled with create-digit-app in the **Digit Apps** Claude
+plugin. The in-app starter zip intentionally does not include it.
 
-```bash
-# From a clone of digit-apps-starter:
-./scripts/install-mcp-skills.sh --user
-
-# Or from anywhere (always GitHub main):
-curl -fsSL -o /tmp/install-mcp-skills.sh \
-  https://raw.githubusercontent.com/Digit-Technologies/digit-apps-starter/main/scripts/install-mcp-skills.sh
-bash /tmp/install-mcp-skills.sh --user
-```
-
-`--user` writes `~/.cursor/skills/create-digit-app` and
-`~/.cursor/skills/update-digit-app`. With no flag, a workspace that already has
-`.agents/skills` is updated in place.
-
-To refresh without a manual download, add a Cursor user rule: *When working on
-Digit custom apps over MCP, run `install-mcp-skills.sh --user` (or the curl
-above) at the start of the session.* The agent then pulls the latest skills
-itself. Pinned zip: `digit-app-mcp-skills.zip` on the
-[starter-latest](https://github.com/Digit-Technologies/digit-apps-starter/releases/tag/starter-latest)
-release (same files, not auto-updated until you re-download).
+Claude users install the plugin once from the
+`Digit-Technologies/digit-apps-starter` marketplace. Do not instruct users to
+download or copy this skill manually.
