@@ -54,7 +54,7 @@ realistic builder-perspective SPEC.
 | Where | How the app is preserved |
 | --- | --- |
 | Local clone / agent workspace | Keep **source** under `apps/<name>` on disk (not build outputs) so later sessions can iterate. Local git commits are optional. Do not push or open PRs against this upstream starter. |
-| Published Digit app | `npm run pack` → `app.zip` (includes required `project/` source tree) |
+| Published Digit app | `npm run pack` → `app.zip` (includes required `project/` source tree). Later sessions restore that tree by GETting MCP **`app`** → `currentPublish.downloadUrl` and unpacking `project/` over `apps/<name>`. |
 
 ### Keep in the workspace
 

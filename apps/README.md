@@ -4,8 +4,9 @@ Digit apps live here, one folder per app. They are npm workspaces of this clone,
 what lets `digit-app pack` find its build toolchain.
 
 The curated starter archive includes `apps/app/`, a packable source scaffold generated
-from the frontend-only `examples/hello-world`. Start there when no retained publish exists.
-When restoring a retained publish, its `project/` tree replaces `apps/app/` entirely.
+from the frontend-only `examples/hello-world`. Start there when the app has never been
+published. To iterate on a live app, GET `currentPublish.downloadUrl` from MCP `app`
+and replace `apps/app/` with that archive's `project/` tree.
 
 ```
 npm run pack -w apps/app      # pack the starter archive's default app

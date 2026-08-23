@@ -24,13 +24,15 @@ Do not build vanilla HTML/CSS UI, invent a parallel design system, or skip the t
 package. Users are often non-developers — one path keeps apps looking and behaving
 like Digit.
 
-**Digit MCP is required.** Use it for schema lookup, permissions, listing apps, and
-publish. If MCP is not connected, stop and ask the user to connect Digit MCP before
+**Digit MCP is required.** Use it for schema lookup, permissions, listing apps,
+downloading the live publish (`app` → `currentPublish.downloadUrl`), and publish.
+If MCP is not connected, stop and ask the user to connect Digit MCP before
 continuing.
 
 ## When to use
 
 - Creating a new Digit app from scratch
+- Iterating on an already-published app (download live source via **`app`**)
 - Adapting one of the `examples/` templates
 - Declaring `manifest.json` permissions / backend
 - Calling the Digit GraphQL API from an app
@@ -44,6 +46,7 @@ continuing.
 | Public GraphQL schema | MCP resources `graphql-schema://index`, `graphql-schema://type/{TypeName}`, `graphql-schema://search/{query}` |
 | Manifest permissions | MCP tool **`appPermissions`** — put each permission’s **`key`** in `manifest.json` |
 | Find an existing app’s id | MCP tool **`apps`** |
+| Load one app (incl. live source) | MCP tool **`app`** — when published, `currentPublish.downloadUrl` is a GET URL for the active bundle |
 | Publish | **`generateAppUploadLink`** → HTTP POST zip → **`publishApp`** → poll **`appPublish`** |
 
 There are **no** MCP tools to create, update, or delete apps, or to manage env/secrets —
@@ -62,6 +65,7 @@ Copy this checklist and track progress:
 Digit app progress:
 - [ ] 1. Use the starter's apps/app, or scaffold apps/<name> for an additional app
 - [ ] 2. Confirm the user created the app in Digit (get appId via apps)
+- [ ] 2b. If iterating on a live app: call app, GET currentPublish.downloadUrl, unpack project/ over apps/<name>
 - [ ] 3. Implement frontend (React + MUI + DigitThemeProvider → #root)
 - [ ] 4. Add src/backend/ only if env/secrets or server logic needed
 - [ ] 5. Look up GraphQL via graphql-schema://… and permissions via appPermissions
@@ -84,10 +88,12 @@ This repo is a single **npm workspace**. Apps live in `apps/<name>` — that dep
 required, because apps depend on the libraries via `file:../../packages/*`.
 
 The curated starter archive already contains `apps/app`, pre-scaffolded from the
-frontend-only `examples/hello-world` without build outputs. Use it when there is no
-retained publish. Add `src/backend/` only when the app needs server-side functionality.
-If a retained publish is supplied, its `project/` tree replaces `apps/app` entirely.
-Run `new-app` only when adding another app workspace:
+frontend-only `examples/hello-world` without build outputs. Use it when the app has
+never been published. Add `src/backend/` only when the app needs server-side
+functionality. When iterating on an already-published app, download the live bundle
+from MCP **`app`** → `currentPublish.downloadUrl` and replace `apps/app` (or
+`apps/<name>`) with that zip’s `project/` tree — do not start from the hello-world
+scaffold and guess. Run `new-app` only when adding another app workspace:
 
 ```bash
 npm install                     # once per clone, from the repo root
@@ -115,6 +121,23 @@ is the path.
 
 Publishing **never creates** an app. Ask the user to create the app in the Digit UI first,
 then resolve its `id` with MCP **`apps`** (or have the user paste it).
+
+### 2b. Iterate from the live published source
+
+If the user wants to change an app that is already live, **download the current
+publish** instead of rebuilding from an example:
+
+1. Call MCP **`apps`** to get the `id`, then MCP **`app`** with that id.
+2. Read `currentPublish.downloadUrl`. If it is missing, the app has no successful
+   publish yet — use `apps/app` / `new-app` as in step 1.
+3. HTTP **GET** that URL (out-of-band; not via MCP) and unzip the archive.
+4. Replace `apps/<name>` entirely with the zip’s **`project/`** tree (source,
+   `manifest.json`, `SPEC.md`, vendored `@digit/lib-*`). Do not copy zip-root
+   `frontend/` / `backend/` into the workspace — those are pack outputs.
+5. Continue the checklist from implementation through pack and republish.
+
+The download is the same shape as a packed `app.zip`. Do not invent another fetch
+path. Details: [reference/publish.md](reference/publish.md).
 
 ### 3. Project layout
 
@@ -284,6 +307,6 @@ Proxy details: [reference/proxy-and-api.md](reference/proxy-and-api.md).
 - [reference/jobs-and-schedules.md](reference/jobs-and-schedules.md) — jobs, schedules, DIGIT_JOBS
 - [reference/webhooks.md](reference/webhooks.md) — inbound webhooks, signature verification
 - [reference/d1-migrations.md](reference/d1-migrations.md) — database SQL applied on publish
-- [reference/publish.md](reference/publish.md) — MCP publish workflow and zip rules
+- [reference/publish.md](reference/publish.md) — MCP publish workflow, live-source download, and zip rules
 - [reference/spec.md](reference/spec.md) — SPEC.md iteration context
 - [`packages/lib-build`](../../../packages/lib-build) — `digit-app pack` shared tooling

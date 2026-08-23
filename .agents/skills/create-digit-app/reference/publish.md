@@ -7,7 +7,8 @@ required for this workflow.
 
 1. User has **created the app in Digit** (UI). Publishing never creates apps — there are
    no MCP tools to create, update, or delete apps.
-2. You know the app `id` — resolve with MCP `apps`, or ask the user.
+2. You know the app `id` — resolve with MCP `apps`, or ask the user. To iterate
+   on the live app, call MCP `app` and GET `currentPublish.downloadUrl` (see below).
 3. GraphQL operations checked against `graphql-schema://…` and `manifest.permissions`
    filled with **`key`** values from MCP **`appPermissions`**.
 4. `app.zip` ready via `npm run pack` (`digit-app pack` from `@digit/lib-build`). Local
@@ -19,6 +20,7 @@ There is no local Digit preview — pack + publish is the workflow.
 
 ```
 1. apps                     → find appId
+1b. app                     → currentPublish.downloadUrl (iterate on live source)
 2. generateAppUploadLink    → id, uploadUrl, uploadFields
 3. HTTP POST zip to uploadUrl (multipart; NOT via MCP)
 4. publishApp               → appId + appUploadLinkId
@@ -30,6 +32,22 @@ There is no local Digit preview — pack + publish is the workflow.
 Call MCP `apps`. Match by `name`. Use the returned `id` as `appId`.
 
 If the app does not exist, stop and ask the user to create it in Digit.
+
+### 1b. Download the active published source (when iterating)
+
+Call MCP `app` with the `id` from step 1. The result includes `currentPublish` when
+the app has a successful publish:
+
+- `currentPublish.downloadUrl` — HTTP GET this URL (out-of-band; not via MCP) to
+  download the **currently live** bundle, the same zip shape produced by
+  `npm run pack`.
+- If `currentPublish` is absent, there is no live bundle — scaffold from
+  `apps/app` or `new-app` instead.
+
+Unzip and replace `apps/<name>` with the archive’s **`project/`** tree (source +
+`SPEC.md` + vendored libs). Then edit, pack, and continue at step 2. Do not
+rebuild from an example while a download URL is available — that discards the
+live app.
 
 ### 2. Generate upload link
 

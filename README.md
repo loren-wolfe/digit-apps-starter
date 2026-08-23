@@ -37,7 +37,8 @@ That skill covers:
 - Root `manifest.json` (staged at the zip root by pack)
 - Digit API access via `useDigitApiQuery` / `/proxy/digit`
 - Env vars and secrets (backend Worker injection only)
-- Publishing with Digit MCP (`apps` → upload zip → `publishApp` → poll)
+- Publishing with Digit MCP (`apps` / `app` → upload zip → `publishApp` → poll)
+- Iterating on a live app via MCP `app` → `currentPublish.downloadUrl`
 
 ## Packages
 
@@ -89,8 +90,9 @@ unzip digit-apps-starter.zip
 
 The archive includes the create-digit-app skill, `examples/`, `packages/`, `scripts/`,
 the packable source tree at `apps/app/`, and root install metadata — not `node_modules`
-or build outputs. A consumer restoring a retained publish can replace `apps/app/`
-entirely with that publish archive's `project/` tree while keeping the starter shell.
+or build outputs. To iterate on an already-published app, GET
+`currentPublish.downloadUrl` from MCP `app` and replace `apps/app/` with that
+archive's `project/` tree while keeping the starter shell.
 
 ## License
 
