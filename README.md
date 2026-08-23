@@ -2,8 +2,9 @@
 
 Skills, shared libraries, and example apps for building on the Digit Apps platform.
 
-Agents clone this into a **local workspace**, scaffold under `apps/`, pack, and publish to
-Digit. Keep app source under `apps/` in that workspace so later sessions can iterate.
+Agents clone this into a **local workspace**, pack, and publish to Digit over MCP.
+After the first publish, later MCP sessions download the live source from
+`app.currentPublish.downloadUrl` rather than depending on a copy the user kept.
 This upstream repo does not accept contributions — do not open PRs or push here.
 
 ## Quick start
@@ -38,7 +39,7 @@ That skill covers:
 - Digit API access via `useDigitApiQuery` / `/proxy/digit`
 - Env vars and secrets (backend Worker injection only)
 - Publishing with Digit MCP (`apps` / `app` → upload zip → `publishApp` → poll)
-- Iterating on a live app via MCP `app` → `currentPublish.downloadUrl`
+- MCP iteration: GET `app.currentPublish.downloadUrl` before editing a published app
 
 ## Packages
 
@@ -68,12 +69,14 @@ API, public API, secrets, D1 CRUD, and env config. `npm run new-app` copies it i
 ## Publish reminder
 
 1. Create the app in the Digit UI first (MCP cannot create apps yet)
-2. Write/update `SPEC.md`, then `npm run pack -w apps/<name>`
-3. `app.zip` contains `frontend/` (+ `backend/` if declared) for Digit deploy, plus
+2. If the app is already published, MCP users GET `currentPublish.downloadUrl` from
+   `app` and unpack `project/` over `apps/<name>` before editing
+3. Write/update `SPEC.md`, then `npm run pack -w apps/<name>`
+4. `app.zip` contains `frontend/` (+ `backend/` if declared) for Digit deploy, plus
    required `project/` (source, SPEC, tooling, vendored libs — not deployed)
-4. Use the MCP publish flow documented in the skill
-5. Keep `apps/<name>` source in the local workspace (not build outputs); do not push or
-   open PRs against this upstream repo
+5. Use the MCP publish flow documented in the skill; the next MCP session starts
+   from the download URL again
+6. Do not push or open PRs against this upstream repo
 
 ## Starter asset
 
@@ -90,7 +93,7 @@ unzip digit-apps-starter.zip
 
 The archive includes the create-digit-app skill, `examples/`, `packages/`, `scripts/`,
 the packable source tree at `apps/app/`, and root install metadata — not `node_modules`
-or build outputs. To iterate on an already-published app, GET
+or build outputs. MCP users iterating on an already-published app GET
 `currentPublish.downloadUrl` from MCP `app` and replace `apps/app/` with that
 archive's `project/` tree while keeping the starter shell.
 
