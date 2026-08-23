@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - '.agents/**'
+      - '.claude-plugin/**'
       - 'examples/**'
       - 'packages/**'
       - 'scripts/**'
@@ -88,6 +89,16 @@ jobs:
 
           test ! -d "$STAGE/.agents/skills/update-digit-app"
           test -f "$STAGE/.agents/skills/create-digit-app/SKILL.md"
+
+          jq -e '
+            .name == "digit-apps" and
+            (.skills | index("./.agents/skills/create-digit-app")) != null and
+            (.skills | index("./.agents/skills/update-digit-app")) != null
+          ' .claude-plugin/plugin.json >/dev/null
+          jq -e '
+            .name == "digit-apps" and
+            any(.plugins[]; .name == "digit-apps" and .source == "./")
+          ' .claude-plugin/marketplace.json >/dev/null
 
           DATE_TAG="starter-$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
           {
