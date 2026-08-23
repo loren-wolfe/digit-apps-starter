@@ -12,7 +12,3 @@ apps/*/backend/
 examples/*/frontend/
 examples/*/backend/
 .claude/*
-
-# Written by Digit’s in-app agent harness — not part of the starter zip
-.digit/in-app-agent
-

@@ -49,8 +49,8 @@ jobs:
             --exclude node_modules \
             --exclude .DS_Store \
             --exclude .vite \
-            .agents/skills/create-digit-app/ \
-            "$STAGE/.agents/skills/create-digit-app/"
+            .agents/skills/ \
+            "$STAGE/.agents/skills/"
 
           rsync -a \
             --exclude node_modules \
@@ -136,7 +136,7 @@ jobs:
           - Dated release: \`${{ steps.build.outputs.tag }}\`
 
           ### Contents
-          - \`.agents/skills/create-digit-app\`
+          - \`.agents/skills/\` (create-digit-app, update-digit-app)
           - Pre-scaffolded, frontend-only, packable \`apps/app/\`
           - \`examples/\`, \`packages/\`, \`scripts/\`
           - Root \`package.json\`, \`package-lock.json\`, \`README.md\`, \`LICENSE\`, \`.gitignore\`

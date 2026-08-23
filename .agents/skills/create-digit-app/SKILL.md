@@ -6,9 +6,7 @@ description: >-
   Vite IIFE bundles, manifest.json, Digit API proxy, env/secrets). Apps run in a
   locked-down sandboxed iframe (no downloads, popups, browser dialogs, clipboard,
   or device APIs). Use when creating a Digit app, editing an app in a local clone
-  of this starter, publishing via MCP, iterating on a published app via MCP
-  (`app.currentPublish.downloadUrl` unless `.digit/in-app-agent` or
-  `DIGIT_IN_APP_AGENT` marks Digit’s in-app agent), or when the user mentions Digit apps,
+  of this starter, publishing via MCP, or when the user mentions Digit apps,
   manifest.json, DigitProxyClient, DigitThemeProvider, /proxy/digit, or
   /proxy/backend.
 ---
@@ -26,42 +24,24 @@ Do not build vanilla HTML/CSS UI, invent a parallel design system, or skip the t
 package. Users are often non-developers — one path keeps apps looking and behaving
 like Digit.
 
-**Digit MCP is required** for schema lookup, permissions, listing apps, and
-publish. If MCP is not connected, stop and ask the user to connect Digit MCP
-before continuing.
-
-**Where the live source comes from**
-
-Both hosts expose Digit MCP (`apps`, `app`, `publishApp`, …). That does **not**
-tell you which host you are — do not guess from tool names, `apps/` existing, or
-the IDE.
-
-**Detect in-app agent with a marker (any one is enough):**
-
-- Workspace file **`.digit/in-app-agent`** at the repo root (Digit’s harness
-  writes this when it installs the live tree; the starter zip must not contain it)
-- Environment variable **`DIGIT_IN_APP_AGENT`** set to a non-empty value
-- Your system/developer instructions explicitly say you are Digit’s **in-app
-  agent**
-
-| Detected host | Live source | Restore |
-| --- | --- | --- |
-| Marker / env / instructions present → **in-app agent** | Already under `apps/<name>` | **Skip** `currentPublish.downloadUrl`. Do not replace `apps/`. |
-| None of the above → **external MCP** | Digit’s published bundle | **Required:** call **`app`**, GET `currentPublish.downloadUrl` if set, unpack `project/` over `apps/<name>` before any edit. |
-
-If you cannot find a marker, treat the session as external MCP. After publish, the
-next external MCP session downloads again; the next in-app session uses the
-harness-installed tree.
+**Digit MCP is required.** Use it for schema lookup, permissions, listing apps, and
+publish. If MCP is not connected, stop and ask the user to connect Digit MCP before
+continuing.
 
 ## When to use
 
 - Creating a new Digit app from scratch
-- Changing a published app (in-app agent: edit the installed tree; external MCP: download first, then republish)
+- Editing an app whose source is **already** on disk (in-app agent sandbox, or
+  after update-digit-app restored the publish)
 - Adapting one of the `examples/` templates
 - Declaring `manifest.json` permissions / backend
 - Calling the Digit GraphQL API from an app
 - Using app env vars or secrets (backend only)
 - Publishing via Digit MCP tools
+
+Changing a **published** app from a **fresh MCP workspace** (no live `project/`
+on disk): follow [update-digit-app](../update-digit-app/SKILL.md) first, then
+return here. Digit’s in-app agent already has that tree — skip update-digit-app.
 
 ## Digit MCP (apps)
 
@@ -70,7 +50,6 @@ harness-installed tree.
 | Public GraphQL schema | MCP resources `graphql-schema://index`, `graphql-schema://type/{TypeName}`, `graphql-schema://search/{query}` |
 | Manifest permissions | MCP tool **`appPermissions`** — put each permission’s **`key`** in `manifest.json` |
 | Find an existing app’s id | MCP tool **`apps`** |
-| Restore live source (external MCP only) | MCP tool **`app`** — GET `currentPublish.downloadUrl` before edits. **In-app agent: skip** — source is already on disk. |
 | Publish | **`generateAppUploadLink`** → HTTP POST zip → **`publishApp`** → poll **`appPublish`** |
 
 There are **no** MCP tools to create, update, or delete apps, or to manage env/secrets —
@@ -87,66 +66,33 @@ Copy this checklist and track progress:
 
 ```
 Digit app progress:
-- [ ] 1. Confirm the app exists in Digit (get appId via apps)
-- [ ] 2. If .digit/in-app-agent, DIGIT_IN_APP_AGENT, or in-app-agent instructions: skip restore. Else (external MCP): call app, GET currentPublish.downloadUrl, unpack project/ over apps/<name>
-- [ ] 3. If no publish yet: use starter apps/app, or new-app for an additional workspace
-- [ ] 4. Implement frontend (React + MUI + DigitThemeProvider → #root)
-- [ ] 5. Add src/backend/ only if env/secrets or server logic needed
-- [ ] 6. Look up GraphQL via graphql-schema://… and permissions via appPermissions
-- [ ] 7. Write root manifest.json (permissions[].key from appPermissions)
-- [ ] 8. Check manifest.permissions against appPermissions — confirm it covers every Digit API call the app makes
-- [ ] 9. Write/update SPEC.md
-- [ ] 10. npm run pack -w apps/<name> → app.zip
-- [ ] 11. Publish via MCP (upload zip out-of-band)
-- [ ] 12. Next session: in-app (marker present) skips step 2; external MCP repeats step 2
+- [ ] 1. Use the starter's apps/app, or scaffold apps/<name> for an additional app
+- [ ] 2. Confirm the user created the app in Digit (get appId via apps)
+- [ ] 3. Implement frontend (React + MUI + DigitThemeProvider → #root)
+- [ ] 4. Add src/backend/ only if env/secrets or server logic needed
+- [ ] 5. Look up GraphQL via graphql-schema://… and permissions via appPermissions
+- [ ] 6. Write root manifest.json (permissions[].key from appPermissions)
+- [ ] 7. Check manifest.permissions against appPermissions — confirm it covers every Digit API call the app makes
+- [ ] 8. Write/update SPEC.md
+- [ ] 9. npm run pack -w apps/<name> → app.zip
+- [ ] 10. Publish via MCP (upload zip out-of-band)
+- [ ] 11. Keep app source under apps/ — not build outputs; no upstream PRs
 ```
 
-Schema and permission lookup (steps 6–8) must happen **before publish**. Do them as soon
+Schema and permission lookup (steps 5–7) must happen **before publish**. Do them as soon
 as you know which Digit API calls the app makes — inventing fields or permission strings
-fails at runtime or publish validation. Re-check step 8 whenever you add or change a Digit
+fails at runtime or publish validation. Re-check step 7 whenever you add or change a Digit
 API call.
 
-### 1. App must already exist in Digit
-
-Publishing **never creates** an app. Ask the user to create the app in the Digit UI first,
-then resolve its `id` with MCP **`apps`** (or have the user paste it).
-
-### 2. Restore the live publish (external MCP only)
-
-**Decide with the marker check above — not with “I have MCP tools.”**
-
-**No in-app marker** (external MCP): Digit keeps the published bundle and does not
-install it into your workspace. At the start of every change session:
-
-1. Call MCP **`app`** with the id from step 1.
-2. If `currentPublish.downloadUrl` is set, HTTP **GET** it (out-of-band; not via
-   MCP) and unzip.
-3. Replace `apps/<name>` entirely with the zip’s **`project/`** tree (source,
-   `manifest.json`, `SPEC.md`, vendored `@digit/lib-*`). Do not copy zip-root
-   `frontend/` / `backend/` into the workspace — those are pack outputs.
-4. Only then edit, pack, and publish. The next unmarked session repeats this
-   download.
-
-If `currentPublish` is missing, there is no successful publish yet — scaffold as in
-step 3. Never rebuild from `examples/` while a download URL exists.
-
-**In-app marker present:** skip this entire step. Edit `apps/<name>` as installed.
-Do **not** GET `currentPublish.downloadUrl` or replace `apps/`.
-
-The download zip is the same shape as a packed `app.zip`. Do not invent another
-fetch path. Details: [reference/publish.md](reference/publish.md).
-
-### 3. Scaffold only when there is no publish yet
+### 1. Scaffold the app
 
 This repo is a single **npm workspace**. Apps live in `apps/<name>` — that depth is
 required, because apps depend on the libraries via `file:../../packages/*`.
 
 The curated starter archive already contains `apps/app`, pre-scaffolded from the
-frontend-only `examples/hello-world` without build outputs. Use that (or `new-app`)
-**only** when you are on external MCP and step 2 found no `currentPublish.downloadUrl`,
-or when the in-app agent provisioned a first-time (never published) workspace. Add
-`src/backend/` only when the app needs server-side functionality. Run `new-app` only
-when adding another app workspace:
+frontend-only `examples/hello-world` without build outputs. Use it for a **new**
+app (no successful publish yet). Add `src/backend/` only when the app needs
+server-side functionality. Run `new-app` only when adding another app workspace:
 
 ```bash
 npm install                     # once per clone, from the repo root
@@ -170,7 +116,12 @@ All apps share React + MUI + `@digit/lib-frontend` and the same folder conventio
 There is no local Digit preview (Worker / env / D1 are platform-injected) — pack + publish
 is the path.
 
-### 4. Project layout
+### 2. App must already exist in Digit
+
+Publishing **never creates** an app. Ask the user to create the app in the Digit UI first,
+then resolve its `id` with MCP **`apps`** (or have the user paste it).
+
+### 3. Project layout
 
 ```
 apps/my-app/
@@ -195,7 +146,7 @@ npm run pack -w apps/my-app     # from repo root → app.zip
 only; still upload the zip **unchanged**. Details:
 [reference/manifest.md](reference/manifest.md), [reference/publish.md](reference/publish.md).
 
-### 5. Frontend rules
+### 4. Frontend rules
 
 - **Iframe limits (hard):** Apps run under
   `sandbox="allow-scripts allow-same-origin"` and a Permissions Policy that sets
@@ -222,7 +173,7 @@ only; still upload the zip **unchanged**. Details:
 - **Public surface:** hooks + theme + `AppErrorAlert` only. Pair hook `error` with
   `AppErrorAlert` (`onRetry` when retryable) — do not branch on `AppErrorCode` in UI.
 
-### 6. `manifest.json`
+### 5. `manifest.json`
 
 Keep it at the **project root**. Pack stages it at the zip root.
 
@@ -251,7 +202,7 @@ handler MUST verify the provider's signature over the raw bytes:
 [reference/webhooks.md](reference/webhooks.md).
 Full schema: [reference/manifest.md](reference/manifest.md).
 
-### 7. Permissions
+### 6. Permissions
 
 `permissions` is the **ceiling** for `/proxy/digit`. Digit intersects it with the viewing
 user’s live permissions at runtime.
@@ -259,56 +210,47 @@ user’s live permissions at runtime.
 1. Call MCP **`appPermissions`**
 2. Put each needed permission’s **`key`** into `manifest.permissions`
 3. Never invent strings — unknown keys fail publish
-4. Before pack/publish (checklist step 8), re-read `manifest.permissions` against
+4. Before pack/publish (checklist step 7), re-read `manifest.permissions` against
    **`appPermissions`** and the app’s Digit API calls — add any missing keys; drop unused
    ones only when you are sure nothing still needs them
 
 Look up GraphQL fields with `graphql-schema://…`, then declare only the permissions those
 operations need. Details: [reference/permissions.md](reference/permissions.md).
 
-### 8. Env vars and secrets
+### 7. Env vars and secrets
 
 Configured on the app in the Digit UI. Injected only into the Worker as `env.KEY`. Read
 with `requireEnv` / `optionalEnv` inside `createHandler`. Frontend never embeds secrets —
 read env-backed data via backend hooks.
 [reference/backend-env-secrets.md](reference/backend-env-secrets.md).
 
-### 9. Publish via MCP
-
-External MCP:
+### 8. Publish via MCP
 
 ```
-apps → app (GET currentPublish.downloadUrl) → edit → pack
-  → generateAppUploadLink → POST zip to uploadUrl → publishApp → poll appPublish
+apps → generateAppUploadLink → POST zip to uploadUrl → publishApp → poll appPublish
 ```
 
-In-app agent (source already on disk):
-
-```
-edit the installed apps/<name> tree → pack
-  → generateAppUploadLink → POST zip to uploadUrl → publishApp → poll appPublish
-```
-
-The zip does **not** travel through MCP. If you cannot POST the zip (or, on
-external MCP, cannot GET the download URL), stop and tell the user. Run
-`npm run pack`, then upload **`app.zip` unchanged**.
+The zip does **not** travel through MCP. If you cannot HTTP POST the zip, stop and tell the
+user. Run `npm run pack`, then upload **`app.zip` unchanged**.
 Full steps: [reference/publish.md](reference/publish.md).
 
-### 10. SPEC.md
+### 9. SPEC.md and local source
 
-Update `SPEC.md` before pack — it ships in `project/` so the next session
-(external MCP download, or in-app harness install) has purpose, why each
-permission/env exists, verbatim prompts, and context. Model:
+Update `SPEC.md` before pack — iteration context for the next agent (purpose, why each
+permission/env exists, verbatim prompts, context supplied). Model:
 [`examples/full-featured/SPEC.md`](../../../examples/full-featured/SPEC.md).
 Details: [reference/spec.md](reference/spec.md).
 
-Do not commit build outputs or open PRs against this upstream starter.
+Keep `apps/<name>/` source on disk. Do not commit build outputs or open PRs against this
+upstream starter.
 
 ## Decision guide
 
 | Need | Path |
 | --- | --- |
 | Any new app | Copy `full-featured`, delete unused tabs/routes |
+| Change a published app (fresh MCP workspace) | [update-digit-app](../update-digit-app/SKILL.md), then this skill |
+| Change a published app (in-app agent) | This skill on the sandbox tree — do not download |
 | Digit GraphQL | Schema resources → hooks + `appPermissions` → `key` in manifest |
 | Env / secrets / D1 / third-party HTTP | Worker + `@digit/lib-backend` |
 | Codes / JSON validation | `@digit/lib-common` |
@@ -349,6 +291,7 @@ Proxy details: [reference/proxy-and-api.md](reference/proxy-and-api.md).
 - [reference/jobs-and-schedules.md](reference/jobs-and-schedules.md) — jobs, schedules, DIGIT_JOBS
 - [reference/webhooks.md](reference/webhooks.md) — inbound webhooks, signature verification
 - [reference/d1-migrations.md](reference/d1-migrations.md) — database SQL applied on publish
-- [reference/publish.md](reference/publish.md) — MCP download → edit → publish loop and zip rules
+- [reference/publish.md](reference/publish.md) — MCP publish workflow and zip rules
 - [reference/spec.md](reference/spec.md) — SPEC.md iteration context
+- [update-digit-app](../update-digit-app/SKILL.md) — MCP restore of a live publish before edit
 - [`packages/lib-build`](../../../packages/lib-build) — `digit-app pack` shared tooling

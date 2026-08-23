@@ -53,13 +53,9 @@ realistic builder-perspective SPEC.
 
 | Where | How the app is preserved |
 | --- | --- |
-| External MCP session | Digit is the source of truth. Before edits, GET MCP **`app`** → `currentPublish.downloadUrl` and unpack `project/` over `apps/<name>`. |
-| Digit in-app agent | Marker: `.digit/in-app-agent` and/or env `DIGIT_IN_APP_AGENT`. Live `project/` is already under `apps/<name>`. Do not re-download. |
+| In-app agent sandbox | Live `project/` is already under `apps/<name>`. Edit in place (create-digit-app). |
+| Fresh MCP workspace | Restore via [update-digit-app](../../update-digit-app/SKILL.md) (`app.currentPublish.downloadUrl` → unpack `project/`). |
 | Published Digit app | `npm run pack` → `app.zip` (includes required `project/` source tree, including this SPEC). |
-
-Work under `apps/<name>` after restore (external MCP) or on the installed tree
-(in-app agent). Local git commits are optional. Do not push or open PRs against
-this upstream starter.
 
 ### Keep in the workspace
 

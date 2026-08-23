@@ -3,11 +3,7 @@
 Skills, shared libraries, and example apps for building on the Digit Apps platform.
 
 Agents clone this into a **local workspace**, pack, and publish to Digit.
-After the first publish, **external MCP** sessions download the live source from
-`app.currentPublish.downloadUrl`. Digit’s **in-app agent** is detected via
-`.digit/in-app-agent` or `DIGIT_IN_APP_AGENT` (already-installed tree — do not
-re-download). This upstream repo does not accept contributions — do not open PRs
-or push here.
+This upstream repo does not accept contributions — do not open PRs or push here.
 
 ## Quick start
 
@@ -26,13 +22,17 @@ The curated starter archive includes `apps/app/`, pre-scaffolded from the fronte
 include a backend or compiled build directories. In that downloaded archive, work in
 `apps/app` instead of running `new-app`; use `new-app` only for another workspace.
 
-## Agent skill
+## Agent skills
 
-Agents should follow:
+- Create / edit when source is already on disk:
+  [`.agents/skills/create-digit-app/SKILL.md`](.agents/skills/create-digit-app/SKILL.md)
+- Change a published app from a **fresh MCP workspace** (download live source first):
+  [`.agents/skills/update-digit-app/SKILL.md`](.agents/skills/update-digit-app/SKILL.md)
 
-[`.agents/skills/create-digit-app/SKILL.md`](.agents/skills/create-digit-app/SKILL.md)
+Digit’s in-app agent uses **create-digit-app only** — the sandbox already has the
+live tree. External MCP uses **update-digit-app** then create-digit-app.
 
-That skill covers:
+The create skill covers:
 
 - **React + MUI + `@digit/lib-frontend`** (required default stack)
 - `src/frontend` + `src/backend` source; sibling `frontend/` / `backend/` build outputs (pack only, not committed)
@@ -40,8 +40,7 @@ That skill covers:
 - Root `manifest.json` (staged at the zip root by pack)
 - Digit API access via `useDigitApiQuery` / `/proxy/digit`
 - Env vars and secrets (backend Worker injection only)
-- Publishing with Digit MCP (`apps` / `app` → upload zip → `publishApp` → poll)
-- External MCP iteration: GET `app.currentPublish.downloadUrl` before editing a published app (in-app agent skips this)
+- Publishing with Digit MCP (`apps` → upload zip → `publishApp` → poll)
 
 ## Packages
 
@@ -71,15 +70,13 @@ API, public API, secrets, D1 CRUD, and env config. `npm run new-app` copies it i
 ## Publish reminder
 
 1. Create the app in the Digit UI first (MCP cannot create apps yet)
-2. If the app is already published: with no in-app marker, GET
-   `currentPublish.downloadUrl` from `app` and unpack `project/` over `apps/<name>`;
-   if `.digit/in-app-agent` or `DIGIT_IN_APP_AGENT` is set, skip that download
+2. Fresh MCP workspace + existing publish: follow **update-digit-app** (download
+   `currentPublish.downloadUrl`) before editing. In-app agent: skip — source is
+   already on disk
 3. Write/update `SPEC.md`, then `npm run pack -w apps/<name>`
 4. `app.zip` contains `frontend/` (+ `backend/` if declared) for Digit deploy, plus
    required `project/` (source, SPEC, tooling, vendored libs — not deployed)
-5. Use the MCP publish flow documented in the skill. The next external MCP
-   session starts from the download URL; the next in-app agent session uses the
-   harness-installed tree
+5. Use the MCP publish flow in create-digit-app
 6. Do not push or open PRs against this upstream repo
 
 ## Starter asset
@@ -95,13 +92,11 @@ curl -fsSL -o digit-apps-starter.zip \
 unzip digit-apps-starter.zip
 ```
 
-The archive includes the create-digit-app skill, `examples/`, `packages/`, `scripts/`,
-the packable source tree at `apps/app/`, and root install metadata — not `node_modules`
-or build outputs. External MCP iterating on an already-published app GETs
-`currentPublish.downloadUrl` from MCP `app` and replaces `apps/app/` with that
-archive's `project/` tree while keeping the starter shell. The zip must **not**
-include `.digit/in-app-agent` — Digit’s in-app harness writes that marker when it
-installs the live tree.
+The archive includes the create-digit-app and update-digit-app skills, `examples/`,
+`packages/`, `scripts/`, the packable source tree at `apps/app/`, and root install
+metadata — not `node_modules` or build outputs. MCP updates replace `apps/app/` with
+the live publish’s `project/` tree (update-digit-app). Digit’s in-app agent already
+has that tree and uses create-digit-app only.
 
 ## License
 
