@@ -5,10 +5,12 @@ description: >-
   @digit/lib-frontend, optional Cloudflare Worker backends via @digit/lib-backend,
   Vite IIFE bundles, manifest.json, Digit API proxy, env/secrets). Apps run in a
   locked-down sandboxed iframe (no downloads, popups, browser dialogs, clipboard,
-  or device APIs). Use when creating a Digit app, editing an app in a local clone
-  of this starter, publishing via MCP, or when the user mentions Digit apps,
-  manifest.json, DigitProxyClient, DigitThemeProvider, /proxy/digit, or
-  /proxy/backend.
+  or device APIs). Use when creating a new Digit app, editing an app whose
+  source is already on disk (in-app agent or after update-digit-app), packing,
+  or publishing via MCP. Do not use as the first step to change a published
+  app from a fresh MCP workspace (use update-digit-app). Also when the user
+  mentions Digit apps, manifest.json, DigitProxyClient, DigitThemeProvider,
+  /proxy/digit, or /proxy/backend.
 ---
 
 # Create Digit App
@@ -40,8 +42,9 @@ continuing.
 - Publishing via Digit MCP tools
 
 Changing a **published** app from a **fresh MCP workspace** (no live `project/`
-on disk): follow [update-digit-app](../update-digit-app/SKILL.md) first, then
-return here. Digit’s in-app agent already has that tree — skip update-digit-app.
+on disk): follow **update-digit-app** first (MCP user skill; not in the in-app
+starter zip), then return here. Digit’s in-app agent already has that tree —
+skip update-digit-app.
 
 ## Digit MCP (apps)
 
@@ -249,7 +252,7 @@ upstream starter.
 | Need | Path |
 | --- | --- |
 | Any new app | Copy `full-featured`, delete unused tabs/routes |
-| Change a published app (fresh MCP workspace) | [update-digit-app](../update-digit-app/SKILL.md), then this skill |
+| Change a published app (fresh MCP workspace) | **update-digit-app** (MCP skill, not in the starter zip), then this skill |
 | Change a published app (in-app agent) | This skill on the sandbox tree — do not download |
 | Digit GraphQL | Schema resources → hooks + `appPermissions` → `key` in manifest |
 | Env / secrets / D1 / third-party HTTP | Worker + `@digit/lib-backend` |
@@ -291,7 +294,5 @@ Proxy details: [reference/proxy-and-api.md](reference/proxy-and-api.md).
 - [reference/jobs-and-schedules.md](reference/jobs-and-schedules.md) — jobs, schedules, DIGIT_JOBS
 - [reference/webhooks.md](reference/webhooks.md) — inbound webhooks, signature verification
 - [reference/d1-migrations.md](reference/d1-migrations.md) — database SQL applied on publish
-- [reference/publish.md](reference/publish.md) — MCP publish workflow and zip rules
 - [reference/spec.md](reference/spec.md) — SPEC.md iteration context
-- [update-digit-app](../update-digit-app/SKILL.md) — MCP restore of a live publish before edit
 - [`packages/lib-build`](../../../packages/lib-build) — `digit-app pack` shared tooling

@@ -24,13 +24,14 @@ include a backend or compiled build directories. In that downloaded archive, wor
 
 ## Agent skills
 
-- Create / edit when source is already on disk:
-  [`.agents/skills/create-digit-app/SKILL.md`](.agents/skills/create-digit-app/SKILL.md)
-- Change a published app from a **fresh MCP workspace** (download live source first):
-  [`.agents/skills/update-digit-app/SKILL.md`](.agents/skills/update-digit-app/SKILL.md)
+| Skill | Who | When |
+| --- | --- | --- |
+| [create-digit-app](.agents/skills/create-digit-app/SKILL.md) | In-app agent **and** MCP | New apps, or edits when source is already on disk |
+| [update-digit-app](.agents/skills/update-digit-app/SKILL.md) | **MCP only** | Change a **published** app from a **fresh** workspace (download live source first) |
 
-Digit’s in-app agent uses **create-digit-app only** — the sandbox already has the
-live tree. External MCP uses **update-digit-app** then create-digit-app.
+The curated **starter zip** (in-app harness) ships **create-digit-app only**. MCP
+hosts should install **both** skills into Cursor and refresh them from GitHub
+`main` (see [MCP skills](#mcp-skills-install-and-updates)).
 
 The create skill covers:
 
@@ -41,6 +42,41 @@ The create skill covers:
 - Digit API access via `useDigitApiQuery` / `/proxy/digit`
 - Env vars and secrets (backend Worker injection only)
 - Publishing with Digit MCP (`apps` → upload zip → `publishApp` → poll)
+
+## MCP skills (install and updates)
+
+Cursor matches skills from YAML `description` fields. Put both skill folders in
+**user skills** (`~/.cursor/skills`) so they apply in every Digit MCP workspace,
+including a starter-zip checkout that has no `update-digit-app`.
+
+**Always current** (GitHub `main`, no manual zip hunt):
+
+```bash
+curl -fsSL -o /tmp/install-mcp-skills.sh \
+  https://raw.githubusercontent.com/Digit-Technologies/digit-apps-starter/main/scripts/install-mcp-skills.sh
+bash /tmp/install-mcp-skills.sh --user
+```
+
+That overwrites `~/.cursor/skills/create-digit-app` and
+`~/.cursor/skills/update-digit-app`. From a git clone of this repo you can run
+`./scripts/install-mcp-skills.sh --user` instead.
+
+Cursor does not auto-update project skills. To avoid pulling by hand, add a
+**user rule**: *When working on Digit custom apps over MCP, run
+`install-mcp-skills.sh --user` at the start of the session.* The agent refreshes
+the files, then follows `update-digit-app` / `create-digit-app`.
+
+Optional pinned snapshot on the same GitHub release as the starter zip:
+
+```bash
+curl -fsSL -o digit-app-mcp-skills.zip \
+  https://github.com/Digit-Technologies/digit-apps-starter/releases/latest/download/digit-app-mcp-skills.zip
+unzip -o digit-app-mcp-skills.zip -d ~/.cursor/skills
+```
+
+Longer term, Digit MCP could expose these markdown files as resources so clients
+never copy them to disk. Until then, user skills + the install script (or the
+user rule) is the refresh path.
 
 ## Packages
 
@@ -92,11 +128,11 @@ curl -fsSL -o digit-apps-starter.zip \
 unzip digit-apps-starter.zip
 ```
 
-The archive includes the create-digit-app and update-digit-app skills, `examples/`,
-`packages/`, `scripts/`, the packable source tree at `apps/app/`, and root install
-metadata — not `node_modules` or build outputs. MCP updates replace `apps/app/` with
-the live publish’s `project/` tree (update-digit-app). Digit’s in-app agent already
-has that tree and uses create-digit-app only.
+The archive includes **create-digit-app only** (not update-digit-app), `examples/`,
+`packages/`, `scripts/` (except `install-mcp-skills.sh`), the packable source tree
+at `apps/app/`, and root install metadata — not `node_modules` or build outputs.
+MCP hosts install create + update into Cursor via
+[MCP skills](#mcp-skills-install-and-updates).
 
 ## License
 

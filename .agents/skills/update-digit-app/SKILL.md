@@ -1,12 +1,16 @@
 ---
 name: update-digit-app
 description: >-
-  Update an already-published Digit custom app from a fresh MCP workspace.
-  Download the live bundle via MCP app.currentPublish.downloadUrl, unpack
-  project/ over apps/<name>, then follow create-digit-app to edit, pack, and
-  republish. Use when changing, iterating on, or fixing a published Digit app
-  over Digit MCP (Cursor and other MCP hosts) — not for first-time create, and
-  not inside Digit’s in-app agent (the sandbox already has the live source).
+  Update, change, edit, modify, iterate on, improve, extend, or fix an
+  existing published Digit custom app over Digit MCP. The workspace is
+  fresh and does not contain the live source — you MUST call the MCP `app`
+  tool, GET `currentPublish.downloadUrl`, and unpack `project/` over
+  `apps/<name>` (usually `apps/app`) before any code changes, then follow
+  create-digit-app to pack and republish. Use when the user mentions an
+  existing Digit app, already published app, live app, current publish,
+  download app source, `currentPublish`, or wants changes to an app they
+  already shipped. Do not use to create a brand-new app (create-digit-app)
+  or inside Digit’s in-app agent (source is already in the sandbox).
 ---
 
 # Update Digit App (MCP)
@@ -82,3 +86,30 @@ through pack and publish. Update `SPEC.md` with the new prompts before pack.
 
 The next **MCP** session that changes this app starts this skill again
 (download first). Do not reuse a leftover local tree from an earlier session.
+
+## Install / keep current (MCP hosts)
+
+The in-app starter zip does **not** include this skill. Install both skills into
+Cursor (user or project) and refresh from GitHub **main** so you are not on a
+stale copy:
+
+```bash
+# From a clone of digit-apps-starter:
+./scripts/install-mcp-skills.sh --user
+
+# Or from anywhere (always GitHub main):
+curl -fsSL -o /tmp/install-mcp-skills.sh \
+  https://raw.githubusercontent.com/Digit-Technologies/digit-apps-starter/main/scripts/install-mcp-skills.sh
+bash /tmp/install-mcp-skills.sh --user
+```
+
+`--user` writes `~/.cursor/skills/create-digit-app` and
+`~/.cursor/skills/update-digit-app`. With no flag, a workspace that already has
+`.agents/skills` is updated in place.
+
+To refresh without a manual download, add a Cursor user rule: *When working on
+Digit custom apps over MCP, run `install-mcp-skills.sh --user` (or the curl
+above) at the start of the session.* The agent then pulls the latest skills
+itself. Pinned zip: `digit-app-mcp-skills.zip` on the
+[starter-latest](https://github.com/Digit-Technologies/digit-apps-starter/releases/tag/starter-latest)
+release (same files, not auto-updated until you re-download).
