@@ -57,15 +57,37 @@ marketplace once; Claude checks that marketplace for plugin updates, and users
 can also select **Update** on the marketplace. No skill ZIP or shell script is
 required.
 
-For Team / Enterprise, an owner can connect this as an organization marketplace
-and distribute the plugin as **Installed by default** or **Required**. Anthropic
-requires organization-synced GitHub marketplaces to be private/internal. Enable
-**Sync automatically** so merged plugin version bumps propagate to users.
+### Publish to the Claude plugin directory
 
-The plugin version lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json)
-and must be bumped whenever either skill changes. For the lowest-friction public
-experience, submit this plugin to Anthropic's community/partner directory so
-users can find it under **Browse plugins** without adding a repository.
+Listing the plugin in Anthropic's directory removes the "add a marketplace" step
+entirely — users find **Digit Apps** under **Browse plugins** and click Install.
+
+1. Bump `version` in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
+2. Validate locally: `claude plugin validate .` (add `--strict` for CI parity).
+3. Submit this **public** repo URL through one of Anthropic's in-app forms:
+   - [claude.ai directory submission](https://claude.ai/admin-settings/directory/submissions/plugins/new)
+     (Team/Enterprise org with directory-management access)
+   - [Console submission](https://platform.claude.com/plugins/submit)
+     (Developer/Admin/Owner on a Console org)
+   - Short link: [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission)
+4. Track review status at
+   [claude.ai/admin-settings/directory/submissions](https://claude.ai/admin-settings/directory/submissions).
+
+Approved plugins are pinned by commit SHA in
+[`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community)
+and the catalog syncs nightly. After approval, pushes to `main` are mirrored
+automatically — no re-submission per release, but still bump `version` so
+installed users receive the update.
+
+Reference: [Submitting your plugin](https://claude.com/docs/plugins/submit) and
+[plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces).
+
+**Team / Enterprise note:** organization-synced marketplaces
+([admin guide](https://support.claude.com/en/articles/13837433-manage-plugins-for-your-organization))
+require a **private or internal** GitHub repo, so this public repo can't be
+connected that way. Customer orgs that want **Installed by default** or
+**Required** distribution should mirror the plugin into a private marketplace
+repo of their own.
 
 ## Packages
 
