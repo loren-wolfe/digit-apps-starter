@@ -110,30 +110,20 @@ jobs:
           path: digit-apps-starter.zip
           if-no-files-found: error
 
-      - name: Create dated release
+      # Use an immutable dated tag and mark this release as latest so
+      # /releases/latest/download/... always works.
+      - name: Create release
         if: env.DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TAG="${{ steps.build.outputs.tag }}"
-          gh release create "$TAG" digit-apps-starter.zip \
-            --title "$TAG" \
-            --notes "Curated digit-apps-starter snapshot from \`${GITHUB_SHA}\` on \`main\`." \
-            --latest=false
-
-      - name: Update starter-latest release
-        if: env.DRY_RUN != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
 
           NOTES="$(cat <<EOF
           Curated digit-apps-starter snapshot for agent sessions.
 
           - Source commit: \`${GITHUB_SHA}\`
-          - Dated release: \`${{ steps.build.outputs.tag }}\`
 
           ### Contents
           - \`.agents/skills/create-digit-app\`
@@ -150,9 +140,7 @@ jobs:
           EOF
           )"
 
-          gh release delete starter-latest --cleanup-tag --yes 2>/dev/null || true
-
-          gh release create starter-latest digit-apps-starter.zip \
-            --title "starter-latest" \
+          gh release create "$TAG" digit-apps-starter.zip \
+            --title "$TAG" \
             --notes "$NOTES" \
             --latest
