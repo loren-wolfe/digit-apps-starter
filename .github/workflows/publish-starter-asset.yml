@@ -92,6 +92,10 @@ jobs:
             echo "sha=${GITHUB_SHA}"
           } >> "$GITHUB_OUTPUT"
 
+          # Read by digit-app pack: stamps the release tag into each published app's manifest.
+          jq --arg tag "$DATE_TAG" '. + {starterRelease: $tag}' "$STAGE/package.json" \
+            > "$STAGE/package.json.tmp" && mv "$STAGE/package.json.tmp" "$STAGE/package.json"
+
           (
             cd "$(dirname "$STAGE")"
             zip -rq "$GITHUB_WORKSPACE/digit-apps-starter.zip" digit-apps-starter

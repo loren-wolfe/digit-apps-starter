@@ -25,6 +25,9 @@ type AppManifest = {
       path: string;        // lowercase [a-z0-9-], max 32, unique — served at /webhooks/{path}
     }[];                   // max 10; see reference/webhooks.md
   };
+  build?: {                // written by `digit-app pack` into the zip copy — do not author it
+    starter: string | null; // starter release tag (or git:<sha> from a checkout)
+  };
 };
 ```
 
@@ -32,6 +35,8 @@ type AppManifest = {
 
 - `permissions` must be an array of known Digit permission **`key`** strings from MCP
   **`appPermissions`** — never invent strings (see [permissions.md](permissions.md))
+- `build` is stamped by `digit-app pack` so Digit can tell which starter release a published
+  app came from. Never hand-write it — re-pack instead
 - If `backend` is present, the zip **must** include `backend/index.js`
 - If the zip includes `backend/` files but the manifest has no `backend` block → reject
 - `bindings` maps `BINDING_NAME` (`^[A-Z][A-Z0-9_]{0,63}$`) to a type: `"database"` (a

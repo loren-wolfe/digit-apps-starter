@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { buildBackend } from './buildBackend.js';
 import { buildFrontend } from './buildFrontend.js';
 import { copyPath, pathExists, rmrf } from './fsutils.js';
+import { buildInfo } from './buildInfo.js';
 
 const PROJECT_ALLOWLIST = [
   'src',
@@ -152,8 +153,13 @@ export async function pack({ root = process.cwd() } = {}) {
   const staging = await fs.mkdtemp(path.join(os.tmpdir(), 'digit-app-pack-'));
 
   try {
-    // Digit expects manifest.json at the zip root, sibling of frontend/ and backend/.
-    await copyPath(path.join(appRoot, 'manifest.json'), path.join(staging, 'manifest.json'));
+    // Digit expects manifest.json at the zip root; the staged copy gains "build" — the author's file is untouched.
+    const manifest = JSON.parse(await fs.readFile(path.join(appRoot, 'manifest.json'), 'utf8'));
+    manifest.build = await buildInfo({ packagesDir });
+    await fs.writeFile(
+      path.join(staging, 'manifest.json'),
+      `${JSON.stringify(manifest, null, 2)}\n`,
+    );
     await copyPath(path.join(appRoot, 'frontend'), path.join(staging, 'frontend'));
     if (await pathExists(path.join(appRoot, 'backend'))) {
       await copyPath(path.join(appRoot, 'backend'), path.join(staging, 'backend'));
