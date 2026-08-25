@@ -7,7 +7,7 @@
 export { DigitThemeProvider } from "./theme"
 
 // Host / proxy types (importing this package augments Window)
-export type { DigitHost, DigitHostSettings } from "./globals"
+export type { DigitHost, DigitHostDownloadOptions, DigitHostSettings } from "./globals"
 import "./globals"
 
 // Errors

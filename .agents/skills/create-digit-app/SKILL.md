@@ -4,7 +4,7 @@ description: >-
   Build and publish Digit custom apps (React + MUI + Digit theme via
   @digit/lib-frontend, optional Cloudflare Worker backends via @digit/lib-backend,
   Vite IIFE bundles, manifest.json, Digit API proxy, env/secrets). Apps run in a
-  locked-down sandboxed iframe (no downloads, popups, browser dialogs, clipboard,
+  locked-down sandboxed iframe (no popups, browser dialogs, clipboard read,
   or device APIs). Use when creating a Digit app, editing an app in a local clone
   of this starter, publishing via MCP, or when the user mentions Digit apps,
   manifest.json, DigitProxyClient, DigitThemeProvider, /proxy/digit, or
@@ -16,7 +16,8 @@ description: >-
 Build Digit custom apps that run inside Digit as **sandboxed iframes** with a locked-down
 Permissions Policy. Follow this skill end-to-end — do not invent alternate layouts,
 mount targets, stacks, or publish flows, and do not build features the iframe cannot
-support (downloads, new tabs/popups, browser dialogs, clipboard, camera, etc.).
+support (new tabs/popups, browser dialogs, clipboard read, camera, etc. — file
+downloads only via `DigitHost.download`).
 See [reference/iframe-constraints.md](reference/iframe-constraints.md).
 
 **Default stack (required):** React + MUI + `@digit/lib-frontend` (`DigitThemeProvider`).
@@ -144,12 +145,14 @@ only; still upload the zip **unchanged**. Details:
 ### 4. Frontend rules
 
 - **Iframe limits (hard):** Apps run under
-  `sandbox="allow-scripts allow-same-origin"` and a Permissions Policy that sets
-  camera, clipboard, fullscreen, geolocation, mic, and related features to `'none'`.
-  **Never** implement downloads, `window.open` / `target="_blank"`, browser
-  `alert`/`confirm`/`prompt`, or device/clipboard/fullscreen APIs — they will not
-  work. In-page MUI Dialog/Drawer/Snackbar are fine. Full list:
-  [reference/iframe-constraints.md](reference/iframe-constraints.md).
+  `sandbox="allow-scripts allow-same-origin allow-forms"` and a Permissions Policy
+  that sets camera, clipboard-read, fullscreen, geolocation, mic, and related
+  features to `'none'`. **Never** implement direct downloads, `window.open` /
+  `target="_blank"`, browser `alert`/`confirm`/`prompt`, or device/clipboard-read/
+  fullscreen APIs — they will not work. Copy buttons (`navigator.clipboard.writeText`
+  in a click handler), form `onSubmit` + `preventDefault`, and file exports via
+  `DigitHost.download` DO work. In-page MUI Dialog/Drawer/Snackbar are fine. Full
+  list: [reference/iframe-constraints.md](reference/iframe-constraints.md).
 - **Stack:** React + MUI + `DigitThemeProvider`. Prefer theme palette / typography over
   hard-coded colors or custom CSS. See [reference/theming.md](reference/theming.md).
 - **Mount to `#root`.** Do not create a different root id or remove `#root`.
@@ -275,7 +278,7 @@ Proxy details: [reference/proxy-and-api.md](reference/proxy-and-api.md).
 
 ## Additional resources
 
-- [reference/iframe-constraints.md](reference/iframe-constraints.md) — sandboxed iframe limits (no downloads/popups/device APIs)
+- [reference/iframe-constraints.md](reference/iframe-constraints.md) — sandboxed iframe limits (popups/device APIs; downloads via `DigitHost.download`)
 - [reference/theming.md](reference/theming.md) — DigitThemeProvider, MUI theme, DigitHost
 - [reference/manifest.md](reference/manifest.md) — schema, backend block, validation rules
 - [reference/proxy-and-api.md](reference/proxy-and-api.md) — schema resources, hooks, proxies
