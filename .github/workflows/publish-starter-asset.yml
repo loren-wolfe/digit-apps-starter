@@ -10,6 +10,7 @@ on:
       - '.cursor-plugin/**'
       - '.codex-plugin/**'
       - 'examples/**'
+      - 'templates/**'
       - 'packages/**'
       - 'scripts/**'
       - 'apps/**'
@@ -137,6 +138,13 @@ jobs:
             --exclude .vite \
             examples/ \
             "$STAGE/examples/"
+
+          rsync -a \
+            --exclude node_modules \
+            --exclude .DS_Store \
+            --exclude .vite \
+            templates/ \
+            "$STAGE/templates/"
 
           rsync -a \
             --exclude node_modules \
@@ -315,7 +323,7 @@ jobs:
           ### Contents
           - \`.agents/skills/sutton-app\`
           - Pre-scaffolded, frontend-only, packable \`apps/app/\`
-          - \`examples/\`, \`packages/\`, \`scripts/\`
+          - \`examples/\`, \`templates/\`, \`packages/\`, \`scripts/\`
           - Prebuilt \`examples/<name>/app.zip\` for every example
           - Root \`package.json\`, \`package-lock.json\`, \`README.md\`, \`LICENSE\`, \`.gitignore\`
 

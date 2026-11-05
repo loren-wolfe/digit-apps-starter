@@ -6,11 +6,13 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const usage = `Usage: npm run new-app -- <app-name> [--from <example>] [--no-install]
+const usage = `Usage: npm run new-app -- <app-name> [--from <example-or-template>] [--no-install]
 
-Scaffold apps/<app-name> from examples/<example> (default: full-featured) and
-link it into the workspace so \`npm run pack\` works.
+Scaffold apps/<app-name> from templates/<name> or examples/<name> (default:
+examples/full-featured) and link it into the workspace so \`npm run pack\` works.
 `;
+
+const SOURCE_DIRS = ['templates', 'examples'];
 
 const SKIP_ANYWHERE = new Set(['node_modules', '.vite', '.DS_Store']);
 // Build outputs (siblings of package.json, never src/frontend or src/backend) and the
@@ -41,7 +43,7 @@ function parseArgs(argv) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(options.name)) {
     throw new Error(`Invalid app name "${options.name}" — use kebab-case (e.g. order-tracker)`);
   }
-  if (!options.from) throw new Error('--from requires an example name');
+  if (!options.from) throw new Error('--from requires an example or template name');
 
   return options;
 }
@@ -61,7 +63,7 @@ async function copyTemplate(src, dest, { atRoot = true } = {}) {
   }
 }
 
-function specTemplate(name, example) {
+function specTemplate(name, source) {
   return `# ${name}
 
 Iteration context for the next agent. Keep this current — chat history is not always
@@ -82,7 +84,7 @@ TODO: the verbatim original request, then each refinement.
 
 ## Context supplied
 
-Scaffolded from \`examples/${example}\`. TODO: docs, tickets, screenshots, and user
+Scaffolded from \`${source}\`. TODO: docs, tickets, screenshots, and user
 decisions that shaped the app.
 `;
 }
@@ -96,15 +98,23 @@ async function main() {
     process.exit(1);
   }
 
-  const template = path.join(repoRoot, 'examples', options.from);
   const dest = path.join(repoRoot, 'apps', options.name);
 
-  try {
-    await fs.access(template);
-  } catch {
-    console.error(`No example named "${options.from}" under examples/`);
+  let source;
+  for (const dir of SOURCE_DIRS) {
+    try {
+      await fs.access(path.join(repoRoot, dir, options.from));
+      source = `${dir}/${options.from}`;
+      break;
+    } catch {
+      // Not in this folder; try the next one.
+    }
+  }
+  if (!source) {
+    console.error(`No template or example named "${options.from}" under templates/ or examples/`);
     process.exit(1);
   }
+  const template = path.join(repoRoot, source);
 
   try {
     await fs.access(dest);
@@ -121,10 +131,10 @@ async function main() {
   pkg.name = `@digit-apps/${options.name}`;
   await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 
-  await fs.writeFile(path.join(dest, 'SPEC.md'), specTemplate(options.name, options.from));
+  await fs.writeFile(path.join(dest, 'SPEC.md'), specTemplate(options.name, source));
   await fs.rm(path.join(dest, 'README.md'), { force: true });
 
-  console.log(`Created apps/${options.name} from examples/${options.from}`);
+  console.log(`Created apps/${options.name} from ${source}`);
 
   if (options.install) {
     console.log('Installing workspace dependencies…');

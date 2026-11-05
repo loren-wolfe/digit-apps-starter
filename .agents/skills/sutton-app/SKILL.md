@@ -39,7 +39,7 @@ stop and ask the user to connect the Digit tools before continuing.
 ## When to use
 
 - Creating a new Digit app from scratch
-- Adapting one of the `examples/` templates
+- Adapting one of the `examples/` or `templates/` starting points
 - Declaring `manifest.json` permissions / backend
 - Calling the Digit GraphQL API from an app
 - Using app env vars or secrets (backend only)
@@ -107,7 +107,12 @@ Run `new-app` only when adding another app workspace:
 ```bash
 npm install                     # once per clone, from the repo root
 npm run new-app -- my-app       # copies examples/full-featured → apps/my-app
+npm run new-app -- my-app --from shipstation-template   # copies templates/shipstation-template
 ```
+
+For a ShipStation, WooCommerce fulfillment, or Shopify item publish integration, start from
+the matching folder in [`templates/`](../../../templates/README.md) instead of
+`full-featured`.
 
 `new-app` copies the template, renames the package, writes a `SPEC.md` stub, and re-runs
 `npm install` so the workspace links the new app. Trim what you don't need from the copy —

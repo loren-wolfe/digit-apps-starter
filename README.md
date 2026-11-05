@@ -14,7 +14,7 @@ npm run new-app -- my-app       # source checkout: scaffold an app
 npm run pack -w apps/my-app     # build frontend/ (+ backend/) and write app.zip
 ```
 
-This repo is one npm workspace (`packages/*`, `examples/*`, `apps/*`). Always install from
+This repo is one npm workspace (`packages/*`, `examples/*`, `templates/*`, `apps/*`). Always install from
 the repo root — `@heysutton/cli` is linked with `file:`, so npm installs its Vite build
 toolchain into the root `node_modules` rather than the app's.
 
@@ -91,6 +91,22 @@ Apps depend on them via `file:…` — not on private `digit-web`. With a Worker
 API, public API, secrets, D1 CRUD, and env config. `npm run new-app` copies it into
 [`apps/`](apps) — trim what you don’t need from there.
 
+## Templates
+
+[`templates/`](templates) holds integration apps you can copy and point at your own accounts.
+None of them contain customer data: every store, key, and token is a secret or env var the
+operator sets in Sutton.
+
+| Template | Connects Sutton to |
+| --- | --- |
+| [`shipstation-template`](templates/shipstation-template) | ShipStation V1 or V2: push shipments, buy labels, pull tracking |
+| [`woocommerce-fulfillment-template`](templates/woocommerce-fulfillment-template) | WooCommerce: deduct inventory and fulfill Sutton orders once WooCommerce completes them |
+| [`shopify-item-publish-template`](templates/shopify-item-publish-template) | Two Shopify stores: publish a Sutton item as a Shopify product |
+
+```bash
+npm run new-app -- my-app --from woocommerce-fulfillment-template
+```
+
 ## Publish reminder
 
 1. Create the app in the Digit UI first (deployment does not create apps)
@@ -116,7 +132,7 @@ curl -fsSL -o digit-apps-starter.zip \
 unzip digit-apps-starter.zip
 ```
 
-The archive includes the sutton-app skill, `examples/`, `packages/`, `scripts/`,
+The archive includes the sutton-app skill, `examples/`, `templates/`, `packages/`, `scripts/`,
 the packable source tree at `apps/app/`, and root install metadata — not `node_modules`
 or build outputs. A consumer restoring a retained publish can replace `apps/app/`
 entirely with that publish archive's `project/` tree while keeping the starter shell.

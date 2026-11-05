@@ -12,6 +12,9 @@ that template under starting points (digit-api serves its `raw.githubusercontent
 from `main`). Pack leaves it out of `app.zip`, and `npm run new-app -- --from <example>`
 does not copy it.
 
+Integration templates (ShipStation, WooCommerce fulfillment, Shopify item publish) live in
+[`../templates/`](../templates), not here.
+
 **Stack:** React + MUI + [`@heysutton/sdk-react`](../packages/sdk-react). Workers use
 [`@heysutton/sdk-server`](../packages/sdk-server) + [`@heysutton/sdk`](../packages/sdk)
 (codes / validation — depend directly; packages do not re-export each other). Tooling:
