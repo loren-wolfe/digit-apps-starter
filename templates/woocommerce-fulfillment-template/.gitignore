@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.env
+!.env.example
+*.log
+npm-debug.log*
+.DS_Store
+
+# Digit pack outputs (sibling to package.json — not src/frontend or src/backend)
+/frontend/
+/backend/
+app.zip
+tmp/
+
+.shot-profile/

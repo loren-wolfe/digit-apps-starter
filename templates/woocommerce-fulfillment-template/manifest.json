@@ -1,0 +1,25 @@
+{
+  "permissions": [
+    "READ_ORDER",
+    "UPDATE_ORDER",
+    "READ_INVENTORY",
+    "UPDATE_INVENTORY",
+    "CREATE_INVENTORY",
+    "READ_WAREHOUSE_LOCATION",
+    "READ_ITEM",
+    "READ_ORGANIZATION_DYNAMIC_FIELD",
+    "UPDATE_ORGANIZATION_DYNAMIC_FIELD"
+  ],
+  "backend": {
+    "kind": "cloudflare-worker",
+    "bindings": {
+      "WOOCOMMERCE_FULFILLMENT_DB": "database"
+    },
+    "schedules": [
+      {
+        "name": "woocommerce-poll",
+        "everySeconds": 1200
+      }
+    ]
+  }
+}
