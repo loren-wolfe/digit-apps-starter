@@ -1,0 +1,21 @@
+{
+  "id": 700001,
+  "status": "processing",
+  "number": "1001",
+  "line_items": [
+    {
+      "id": 800001,
+      "sku": "SKU-EXAMPLE",
+      "quantity": 1,
+      "name": "Example product"
+    }
+  ],
+  "shipping": {
+    "first_name": "Alex",
+    "last_name": "Example",
+    "city": "Portland",
+    "state": "OR",
+    "country": "US",
+    "postcode": "97201"
+  }
+}

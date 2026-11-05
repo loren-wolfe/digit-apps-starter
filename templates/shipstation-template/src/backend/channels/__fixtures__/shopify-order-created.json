@@ -1,0 +1,24 @@
+{
+  "id": 500001,
+  "admin_graphql_api_id": "gid://shopify/Order/500001",
+  "name": "#1001",
+  "order_number": 1001,
+  "financial_status": "paid",
+  "fulfillment_status": null,
+  "line_items": [
+    {
+      "id": 900001,
+      "sku": "SKU-EXAMPLE",
+      "quantity": 2,
+      "title": "Example product"
+    }
+  ],
+  "shipping_address": {
+    "first_name": "Alex",
+    "last_name": "Example",
+    "city": "Portland",
+    "province_code": "OR",
+    "country_code": "US",
+    "zip": "97201"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@digit-apps/shipstation-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "pack": "sutton studio pack",
+    "sandbox-viewer": "node --env-file=tools/sandbox-viewer/.env.local tools/sandbox-viewer/server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@heysutton/sdk-server": "file:../../packages/sdk-server",
+    "@heysutton/sdk": "file:../../packages/sdk",
+    "@heysutton/sdk-react": "file:../../packages/sdk-react",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.3.1",
+    "@mui/material": "^9.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@heysutton/cli": "file:../../packages/cli",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "typescript": "^7.0.2"
+  }
+}

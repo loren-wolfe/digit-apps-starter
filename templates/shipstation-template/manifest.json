@@ -1,0 +1,44 @@
+{
+  "permissions": [
+    "UPDATE_ORGANIZATION",
+    "READ_ORDER",
+    "UPDATE_ORDER",
+    "CREATE_ORDER",
+    "READ_SHIPMENT",
+    "CREATE_SHIPMENT",
+    "UPDATE_SHIPMENT",
+    "CREATE_PACK_CONTAINER",
+    "READ_PACK_CONTAINER",
+    "READ_PICKED_ITEM",
+    "READ_ITEM",
+    "READ_ITEM_COST_INFO",
+    "READ_INVENTORY",
+    "READ_COMPANY",
+    "READ_COMPANY_DETAILS",
+    "CREATE_COMPANY",
+    "READ_CONTACT",
+    "READ_ORGANIZATION_LOCATION",
+    "READ_ORGANIZATION_DYNAMIC_FIELD",
+    "READ_INTEGRATION"
+  ],
+  "backend": {
+    "kind": "cloudflare-worker",
+    "bindings": {
+      "SHIPSTATION_DB": "database"
+    },
+    "schedules": [
+      {
+        "name": "poll-outbound-push",
+        "everySeconds": 300
+      },
+      {
+        "name": "prune-activity",
+        "everySeconds": 300
+      },
+      {
+        "name": "refresh-package-catalog",
+        "everySeconds": 300
+      }
+    ]
+  }
+}
