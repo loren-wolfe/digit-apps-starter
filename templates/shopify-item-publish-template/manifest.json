@@ -1,0 +1,11 @@
+{
+  "permissions": [
+    "READ_ITEM",
+    "READ_ITEM_COST_INFO",
+    "UPDATE_ITEM",
+    "READ_ORGANIZATION_DYNAMIC_FIELD"
+  ],
+  "backend": {
+    "kind": "cloudflare-worker"
+  }
+}

@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sutton to Shopify — local preview</title>
+    <style>
+      html, body, #root { margin: 0; min-height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.DigitHost = {
+        getSettings() { return { theme: 'light' }; },
+        onSettingsChange() { return function () {}; },
+        download() {},
+      };
+
+      const secret = (key, enables, description) => ({
+        key, kind: 'secret', required: true, present: true, valid: true,
+        source: 'appSecret', issue: null, enables, description, profiles: [],
+      });
+
+      const setup = {
+        ready: true,
+        usable: true,
+        items: [
+          secret('API_TOKEN_SUTTON', 'Searching Sutton items.', 'Preview token.'),
+          secret('SHOPIFY_STORE_A_SHOP', 'Retail store.', 'Preview.'),
+          secret('SHOPIFY_STORE_A_CLIENT_ID', 'Retail client id.', 'Preview.'),
+          secret('SHOPIFY_STORE_A_CLIENT_SECRET', 'Retail client secret.', 'Preview.'),
+          secret('SHOPIFY_STORE_B_SHOP', 'B2B store.', 'Preview.'),
+          secret('SHOPIFY_STORE_B_CLIENT_ID', 'B2B client id.', 'Preview.'),
+          secret('SHOPIFY_STORE_B_CLIENT_SECRET', 'B2B client secret.', 'Preview.'),
+        ],
+        stores: [
+          { id: 'a', label: 'Store A', shop: 'my-retail-store', domain: 'my-retail-store.myshopify.com', configured: true, ready: true, error: null, name: 'My Retail Store' },
+          { id: 'b', label: 'Store B', shop: 'my-b2b-store', domain: 'my-b2b-store.myshopify.com', configured: true, ready: true, error: null, name: 'My B2B Store' },
+        ],
+      };
+
+      const affogatoSizes = [
+        ['1X', 'D4431-BBLT_1X', '193475309843'],
+        ['2X', 'D4431-BBLT_2X', '193475309850'],
+        ['3X', 'D4431-BBLT_3X', '193475309867'],
+        ['L', 'D4431-BBLT_L', '193475309829'],
+        ['M', 'D4431-BBLT_M', '193475309812'],
+        ['S', 'D4431-BBLT_S', '193475309805'],
+        ['XL', 'D4431-BBLT_XL', '193475309836'],
+        ['XS', 'D4431-BBLT_XS', '193475309799'],
+      ];
+      const testSizes = [
+        ['S', 'TEST-SEAG_S', ''],
+        ['M', 'TEST-SEAG_M', ''],
+        ['L', 'TEST-SEAG_L', ''],
+      ];
+
+      function catalogItem(styleName, color, size, sku) {
+        return {
+          id: sku,
+          name: `${styleName} - ${size} / ${color}`,
+          sku,
+          status: 'active',
+          itemTypes: ['buy', 'sell'],
+          hasVariants: false,
+          parent: null,
+        };
+      }
+
+      const items = [
+        ...affogatoSizes.map(([size, sku]) => catalogItem('Affogato Scoop Bikini Top', 'Blueberry Latte', size, sku)),
+        ...testSizes.map(([size, sku]) => catalogItem('TEST SCOOP TOP', 'Sea Glass', size, sku)),
+      ];
+
+      function destinationStores(group, selectedSizes) {
+        const skus = selectedSizes.map(([, sku]) => sku);
+        const onShopify = new Set(group.onShopify || []);
+        const action = group.product ? 'update' : 'create';
+        const updateSkus = action === 'update' ? skus.filter((sku) => onShopify.has(sku)) : [];
+        const createSkus = action === 'update' ? skus.filter((sku) => !onShopify.has(sku)) : skus;
+        return ['a', 'b'].map((id, index) => ({
+          id,
+          label: id === 'a' ? 'Store A' : 'Store B',
+          shop: index === 0 ? 'my-retail-store' : 'my-b2b-store',
+          domain: index === 0 ? 'my-retail-store.myshopify.com' : 'my-b2b-store.myshopify.com',
+          configured: true,
+          ready: true,
+          action,
+          actionLabel: action === 'create' ? 'Create draft' : 'Update',
+          blockers: [],
+          error: null,
+          product: group.product || null,
+          collidingProducts: [],
+          createSkus,
+          updateSkus,
+          productSkus: group.onShopify || [],
+        }));
+      }
+
+      function groupPreview(picked, group, selectedIds) {
+        const { styleName, color, styleColor, sizes, price, description, productType, metafields } = group;
+        const chosen = new Set(selectedIds && selectedIds.length ? selectedIds : [picked.id]);
+        const selectedSizes = sizes.filter(([, sku]) => chosen.has(sku));
+        const single = selectedSizes.length === 1 ? selectedSizes[0] : null;
+        return {
+          item: { id: picked.id, name: picked.name },
+          values: {
+            title: `${styleName} / ${color}`,
+            description,
+            productType,
+            tags: [],
+            sku: single ? single[1] : '',
+            skuNote: single ? '' : 'Per variant — see the list below.',
+            barcode: single ? single[2] : '',
+            barcodeNote: single ? '' : 'Per variant — see the list below.',
+            price: single ? Number(price).toFixed(2) : '',
+            priceNote: single ? '' : 'Per variant — see the list below.',
+            variants: sizes.map(([size, sku, upc]) => ({
+              itemId: sku,
+              name: `${styleName} - ${size} / ${color}`,
+              sku,
+              barcode: upc,
+              price,
+              priceLabel: Number(price).toFixed(2),
+              optionsLabel: size,
+              selected: chosen.has(sku),
+            })),
+            styleColor,
+            metafields,
+          },
+          stores: destinationStores(group, selectedSizes),
+        };
+      }
+
+      const groups = {
+        'D4431-BBLT': {
+          styleName: 'Affogato Scoop Bikini Top',
+          color: 'Blueberry Latte',
+          styleColor: 'D4431-BBLT',
+          sizes: affogatoSizes,
+          price: 56,
+          description: 'Our newest scoop bikini top features a sporty silhouette with fun ruffly trim and adjustable straps for customizable support. Pair with our matching Sunrise Bottom to complete the set.',
+          productType: 'BIKINI TOP',
+          metafields: [
+            { sutton: 'Top Style', shopify: 'Top Style', value: '' },
+            { sutton: 'Coverage', shopify: 'coverage', value: '' },
+            { sutton: 'Sub Class 2', shopify: 'Sub-class 2', value: '' },
+            { sutton: 'Department', shopify: 'Department', value: 'SWIM' },
+            { sutton: 'Collection', shopify: 'Collection', value: 'FALL' },
+            { sutton: 'Style Type', shopify: 'Style Type', value: 'NOVELTY' },
+            { sutton: 'Sub Class', shopify: 'Sub-class', value: 'MISC' },
+            { sutton: 'Year', shopify: 'Year', value: '2026' },
+            { sutton: 'Season', shopify: 'Season', value: 'SUMMER' },
+            { sutton: 'Fabrication', shopify: 'Fabrication', value: 'JRM' },
+            { sutton: 'Color Code', shopify: 'Color Code', value: 'BBLT' },
+            { sutton: 'Color', shopify: 'Product Color', value: 'Blueberry Latte' },
+          ],
+          product: { id: 'gid://shopify/Product/8156285239353', title: 'Affogato Scoop Bikini Top / Blueberry Latte', handle: 'affogato-scoop-bikini-top', status: 'ACTIVE' },
+          onShopify: affogatoSizes.map(([, sku]) => sku),
+        },
+        'TEST-SEAG': {
+          styleName: 'TEST SCOOP TOP',
+          color: 'Sea Glass',
+          styleColor: 'TEST-SEAG',
+          sizes: testSizes,
+          price: 48,
+          description: 'Test colorway for the Shopify publisher. Three standalone sizes share Style# + Color TEST-SEAG.',
+          productType: 'BIKINI TOP',
+          metafields: [
+            { sutton: 'Top Style', shopify: 'Top Style', value: 'Scoop' },
+            { sutton: 'Coverage', shopify: 'coverage', value: '' },
+            { sutton: 'Sub Class 2', shopify: 'Sub-class 2', value: '' },
+            { sutton: 'Department', shopify: 'Department', value: 'SWIM' },
+            { sutton: 'Collection', shopify: 'Collection', value: 'SPRING' },
+            { sutton: 'Style Type', shopify: 'Style Type', value: 'NOVELTY' },
+            { sutton: 'Sub Class', shopify: 'Sub-class', value: 'SCOOP' },
+            { sutton: 'Year', shopify: 'Year', value: '2026' },
+            { sutton: 'Season', shopify: 'Season', value: 'TEST WALKTHROUGH' },
+            { sutton: 'Fabrication', shopify: 'Fabrication', value: 'JRM' },
+            { sutton: 'Color Code', shopify: 'Color Code', value: 'SEAG' },
+            { sutton: 'Color', shopify: 'Product Color', value: 'Sea Glass' },
+          ],
+          product: { id: 'gid://shopify/Product/9000000000001', title: 'TEST SCOOP TOP / Sea Glass', handle: 'test-scoop-top-sea-glass', status: 'DRAFT' },
+          onShopify: ['TEST-SEAG_M'],
+        },
+      };
+
+      function groupFor(item) {
+        const key = String(item?.sku || '').replace(/_[^_]+$/, '');
+        return groups[key] || groups['TEST-SEAG'];
+      }
+
+      function localPublish(body) {
+        const payload = typeof body === 'string' ? JSON.parse(body) : (body || {});
+        const stores = Array.isArray(payload.stores) && payload.stores.length > 0 ? payload.stores : ['a', 'b'];
+        const idStore = payload.idStore || (stores.length === 1 ? stores[0] : '');
+        const chosenIds = new Set([payload.itemId, ...(Array.isArray(payload.variantIds) ? payload.variantIds : [])].filter(Boolean));
+        const seaGlass = [...chosenIds].some((id) => String(id).startsWith('TEST-SEAG'));
+        const addedCount = [...chosenIds].filter((id) => String(id).startsWith('TEST-SEAG') && id !== 'TEST-SEAG_M').length;
+        const domains = {
+          a: 'my-retail-store.myshopify.com',
+          b: 'my-b2b-store.myshopify.com',
+        };
+        const productIds = { a: '9000000000001', b: '9000000000002' };
+        return {
+          results: stores.map((id) => {
+            let message = `Updated the product in ${domains[id]}. Shopify status was left unchanged.`;
+            if (seaGlass && id === idStore && addedCount > 0) {
+              message += ` Saved Shopify product ${productIds[id]} and ${addedCount} variant ${addedCount === 1 ? 'id' : 'ids'} on the Sutton items.`;
+            }
+            return {
+              id,
+              label: id === 'a' ? 'Store A' : 'Store B',
+              domain: domains[id],
+              status: 'updated',
+              action: 'update',
+              actionLabel: 'Updated',
+              productId: seaGlass ? `gid://shopify/Product/${productIds[id]}` : 'gid://shopify/Product/8156285239353',
+              adminUrl: null,
+              message,
+            };
+          }),
+        };
+      }
+
+      window.DigitProxyClient = {
+        async callProxy() {
+          return { data: { organization: { id: 'org_preview' } } };
+        },
+        async callBackend(path, options) {
+          const url = String(path || '');
+          let data = null;
+          if (url.startsWith('/setup')) data = setup;
+          else if (url.includes('/preview')) {
+            const id = decodeURIComponent((url.match(/\/items\/([^/?]+)/) || [])[1] || '');
+            const picked = items.find((item) => item.id === id) || items[0];
+            const rawVariants = (url.match(/[?&]variants=([^&]*)/) || [])[1] || '';
+            const extras = rawVariants ? decodeURIComponent(rawVariants).split(',').filter(Boolean) : [];
+            data = groupPreview(picked, groupFor(picked), [picked.id, ...extras]);
+          }
+          else if (url.startsWith('/items')) {
+            const query = decodeURIComponent((url.match(/[?&]search=([^&]*)/) || [])[1] || '').trim().toLowerCase();
+            data = { items: query ? items.filter((item) => `${item.name} ${item.sku}`.toLowerCase().includes(query)) : items };
+          }
+          else if (url === '/publish') data = localPublish(options && options.body);
+          else data = { results: [] };
+          return new Response(JSON.stringify({ ok: true, data }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        },
+      };
+    </script>
+    <script type="module" src="/src/frontend/main.tsx"></script>
+  </body>
+</html>
